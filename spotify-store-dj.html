@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Store DJ — Spotify Automation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Mono:wght@300;400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --saffron: #E8712A;
+    --saffron-light: #F4A261;
+    --cream: #FDF6EC;
+    --deep: #1A1208;
+    --muted: #7A6A52;
+    --card-bg: #FFFAF3;
+    --border: #E8D9C0;
+    --green: #1DB954;
+    --green-dark: #158a3e;
+    --morning: #F9C74F;
+    --afternoon: #E8712A;
+    --evening: #6A4C93;
+    --night: #264653;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--deep);
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 10% 0%, rgba(232,113,42,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 90% 100%, rgba(106,76,147,0.06) 0%, transparent 60%);
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(253,246,236,0.85);
+    backdrop-filter: blur(8px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--saffron);
+    letter-spacing: -0.02em;
+  }
+
+  .logo span {
+    color: var(--deep);
+    font-weight: 400;
+  }
+
+  .spotify-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #ccc;
+    transition: background 0.3s;
+  }
+  .dot.connected { background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+  }
+  .demo-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    color: var(--deep);
+    background: rgba(232,113,42,0.08);
+    border: 1px solid rgba(232,113,42,0.25);
+    padding: 0.35rem 0.7rem;
+    border-radius: 20px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .demo-toggle input { cursor: pointer; accent-color: var(--saffron); }
+  .demo-toggle.on { background: rgba(232,113,42,0.18); }
+
+  /* Embed iframe */
+  .embed-wrap {
+    margin-top: 1rem;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: #000;
+  }
+  .embed-wrap iframe {
+    display: block;
+    width: 100%;
+    height: 352px;
+    border: 0;
+  }
+
+  /* Per-mood URL editor */
+  .mood-config {
+    margin-top: 1rem;
+    padding: 0.9rem 1rem;
+    background: rgba(253,246,236,0.7);
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+  }
+  .mood-config summary {
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--saffron);
+    letter-spacing: 0.05em;
+  }
+  .mood-config-grid {
+    display: grid;
+    gap: 0.5rem;
+    margin-top: 0.8rem;
+  }
+  .mood-config-row {
+    display: grid;
+    grid-template-columns: 130px 1fr auto;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  .mood-config-row span {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+  .mood-config-row input {
+    padding: 0.45rem 0.6rem;
+    font-size: 0.75rem;
+  }
+  .mood-config-row .find-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    font-family: 'DM Mono', monospace;
+    padding: 0.4rem 0.7rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: white;
+    color: var(--saffron);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .mood-config-row .find-btn:hover {
+    border-color: var(--saffron);
+    background: rgba(232,113,42,0.06);
+  }
+
+  /* ── MOOD PICKER (top-5 search results) ── */
+  .mood-picker {
+    margin-top: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: white;
+    overflow: hidden;
+  }
+  .picker-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.7rem 1rem;
+    background: rgba(232,113,42,0.06);
+    border-bottom: 1px solid var(--border);
+    font-size: 0.82rem;
+    color: var(--deep);
+  }
+  .picker-header strong { color: var(--saffron); }
+  .picker-close {
+    background: none; border: 0; cursor: pointer;
+    font-size: 0.95rem; color: var(--muted);
+    padding: 0.15rem 0.4rem; border-radius: 4px;
+  }
+  .picker-close:hover { color: var(--saffron); background: rgba(232,113,42,0.08); }
+  .picker-grid { display: grid; gap: 0.4rem; padding: 0.6rem; }
+  .picker-card {
+    display: grid;
+    grid-template-columns: 22px 48px 1fr auto;
+    gap: 0.8rem;
+    align-items: center;
+    padding: 0.55rem 0.6rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    border: 1px solid transparent;
+  }
+  .picker-card:hover {
+    background: rgba(232,113,42,0.06);
+    border-color: rgba(232,113,42,0.25);
+  }
+  .picker-card.current {
+    background: rgba(29,185,84,0.08);
+    border-color: rgba(29,185,84,0.3);
+  }
+  .picker-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+    text-align: center;
+  }
+  .picker-card img, .picker-img-ph {
+    width: 48px; height: 48px;
+    border-radius: 5px;
+    object-fit: cover;
+    background: var(--border);
+    display: block;
+  }
+  .picker-info { min-width: 0; }
+  .picker-name {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--deep);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .picker-meta {
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .picker-play {
+    color: var(--saffron);
+    font-size: 1rem;
+    padding-right: 0.4rem;
+  }
+  .picker-card.current .picker-play { color: var(--green); }
+
+  main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+
+  /* ── STEP SECTIONS ── */
+  .step {
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    transform: translateY(16px);
+    animation: fadeUp 0.5s ease forwards;
+  }
+  .step:nth-child(1) { animation-delay: 0.05s; }
+  .step:nth-child(2) { animation-delay: 0.15s; }
+  .step:nth-child(3) { animation-delay: 0.25s; }
+  .step:nth-child(4) { animation-delay: 0.35s; }
+
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .step-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    color: var(--saffron);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--deep);
+  }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+  }
+
+  /* ── CREDENTIALS ── */
+  .fields { display: grid; gap: 0.75rem; }
+
+  label {
+    display: block;
+    font-size: 0.78rem;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    margin-bottom: 0.3rem;
+    text-transform: uppercase;
+  }
+
+  input[type="text"], input[type="password"] {
+    width: 100%;
+    padding: 0.65rem 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: white;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--deep);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+  input:focus {
+    border-color: var(--saffron);
+    box-shadow: 0 0 0 3px rgba(232,113,42,0.12);
+  }
+
+  .hint {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 0.75rem;
+    line-height: 1.5;
+  }
+  .hint a { color: var(--saffron); text-decoration: none; }
+  .hint a:hover { text-decoration: underline; }
+
+  /* ── SCHEDULE GRID ── */
+  .schedule-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .slot {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.1rem;
+    background: white;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slot::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .slot.morning::before  { background: var(--morning); }
+  .slot.afternoon::before { background: var(--afternoon); }
+  .slot.evening::before  { background: var(--evening); }
+  .slot.night::before    { background: var(--night); }
+
+  .slot-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.6rem;
+  }
+
+  .slot-name {
+    font-size: 0.78rem;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 400;
+  }
+
+  .slot-time {
+    font-size: 0.7rem;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .slot select {
+    width: 100%;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--deep);
+    outline: none;
+    cursor: pointer;
+  }
+
+  /* ── MOOD CARDS ── */
+  .mood-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .mood-btn {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.8rem 0.5rem;
+    background: white;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.18s ease;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .mood-btn:hover { border-color: var(--saffron); background: rgba(232,113,42,0.04); }
+  .mood-btn.active {
+    border-color: var(--saffron);
+    background: rgba(232,113,42,0.08);
+    box-shadow: 0 0 0 2px rgba(232,113,42,0.2);
+  }
+
+  .mood-icon { font-size: 1.4rem; margin-bottom: 0.3rem; }
+  .mood-label { font-size: 0.75rem; color: var(--deep); font-weight: 500; }
+  .mood-sub { font-size: 0.68rem; color: var(--muted); margin-top: 0.1rem; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0.65rem 1.4rem;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    border: none;
+    outline: none;
+  }
+
+  .btn-primary {
+    background: var(--saffron);
+    color: white;
+  }
+  .btn-primary:hover { background: var(--saffron-light); transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+
+  .btn-spotify {
+    background: var(--green);
+    color: white;
+  }
+  .btn-spotify:hover { background: var(--green-dark); transform: translateY(-1px); }
+
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--deep);
+  }
+  .btn-ghost:hover { border-color: var(--saffron); background: rgba(232,113,42,0.05); }
+
+  .btn-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+  }
+
+  /* ── NOW PLAYING ── */
+  .now-playing {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    background: var(--deep);
+    color: var(--cream);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .vinyl {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: conic-gradient(#333 0deg, #444 45deg, #333 90deg, #444 135deg, #333 180deg, #444 225deg, #333 270deg, #444 315deg, #333 360deg);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .vinyl::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--saffron);
+  }
+  .vinyl.spinning {
+    animation: spin 2s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .np-info { flex: 1; }
+  .np-track { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; }
+  .np-meta { font-size: 0.75rem; color: rgba(253,246,236,0.6); margin-top: 0.2rem; font-family: 'DM Mono', monospace; }
+
+  .np-badge {
+    font-size: 0.65rem;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: var(--saffron);
+    color: white;
+    padding: 0.25rem 0.6rem;
+    border-radius: 20px;
+  }
+
+  /* ── LOG ── */
+  .log {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.9rem 1rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    max-height: 140px;
+    overflow-y: auto;
+    line-height: 1.7;
+  }
+  .log .ok   { color: var(--green); }
+  .log .err  { color: #e55; }
+  .log .info { color: var(--saffron); }
+
+  /* ── STATUS BAR ── */
+  .status-bar {
+    background: var(--deep);
+    color: rgba(253,246,236,0.5);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    padding: 0.5rem 2rem;
+    letter-spacing: 0.05em;
+    display: flex;
+    gap: 2rem;
+    position: fixed;
+    bottom: 0;
+    left: 0; right: 0;
+  }
+  .status-bar span { color: rgba(253,246,236,0.85); }
+
+  /* ── DIVIDER ── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0.5rem 0 1rem;
+  }
+
+  /* ── PLAYLIST SEARCH ── */
+  .playlist-result {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0.5rem 0.6rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .playlist-result:hover { background: rgba(232,113,42,0.06); }
+  .playlist-result img {
+    width: 36px; height: 36px;
+    border-radius: 4px;
+    object-fit: cover;
+    background: var(--border);
+  }
+  .pr-name { font-size: 0.82rem; font-weight: 500; }
+  .pr-tracks { font-size: 0.7rem; color: var(--muted); font-family: 'DM Mono', monospace; }
+
+  .search-wrap {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .search-wrap input { flex: 1; }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(232,113,42,0.1);
+    color: var(--saffron);
+    border: 1px solid rgba(232,113,42,0.25);
+    border-radius: 20px;
+    padding: 0.2rem 0.65rem;
+    font-size: 0.75rem;
+    font-family: 'DM Mono', monospace;
+    cursor: pointer;
+  }
+  .tag:hover { background: rgba(232,113,42,0.2); }
+
+  .hidden { display: none !important; }
+
+  @media (max-width: 600px) {
+    .schedule-grid { grid-template-columns: 1fr; }
+    .mood-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Store<span>DJ</span></div>
+  <div class="header-right">
+    <label class="demo-toggle on" id="demo-toggle-label" title="Play via Spotify embed — no API login needed">
+      <input type="checkbox" id="demo-toggle" checked onchange="toggleDemoMode(this.checked)">
+      <span>🧪 DEMO MODE</span>
+    </label>
+    <div class="spotify-badge">
+      <div class="dot" id="conn-dot"></div>
+      <span id="conn-label">NOT CONNECTED</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- STEP 1: Credentials -->
+  <div class="step">
+    <div class="step-label">Step 01</div>
+    <h2>Spotify API credentials</h2>
+    <div class="card">
+      <div class="fields">
+        <div>
+          <label>Client ID</label>
+          <input type="text" id="client-id" placeholder="e.g. a1b2c3d4e5f6...">
+        </div>
+        <div>
+          <label>Client Secret <span style="text-transform:none;opacity:0.7">(enables the Top-5 playlist picker)</span></label>
+          <input type="password" id="client-secret" placeholder="Paste to auto-search top playlists per mood">
+        </div>
+        <div>
+          <label>Redirect URI</label>
+          <input type="text" id="redirect-uri" value="http://127.0.0.1:8888/spotify-store-dj.html" placeholder="http://127.0.0.1:8888/spotify-store-dj.html">
+        </div>
+      </div>
+      <p class="hint">
+        Get these from the
+        <a href="https://developer.spotify.com/dashboard" target="_blank">Spotify Developer Dashboard</a>.
+        This app uses <strong>Authorization Code + PKCE</strong> — Client Secret is not needed.
+        <br><br>
+        <strong>Before clicking Connect:</strong><br>
+        1. In Terminal: <code>cd /Users/dris/Desktop/Claude/Store_DJ &amp;&amp; python3 -m http.server 8888</code><br>
+        2. Open <code>http://127.0.0.1:8888/spotify-store-dj.html</code> in your browser<br>
+        3. In your Spotify app settings, add Redirect URI exactly: <code>http://127.0.0.1:8888/spotify-store-dj.html</code> — click Add, then Save
+        <br><br>
+        <strong>Scopes:</strong> <code>playlist-read-private playlist-modify-public playlist-modify-private user-modify-playback-state user-read-playback-state</code>
+      </p>
+      <div class="btn-row">
+        <button class="btn btn-spotify" onclick="connectSpotify()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+          Connect to Spotify
+        </button>
+        <button class="btn btn-ghost" onclick="testConnection()">Test connection</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2: Schedule -->
+  <div class="step">
+    <div class="step-label">Step 02</div>
+    <h2>Time-of-day schedule</h2>
+    <div class="card">
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem;">Assign a playlist or mood to each part of the store day. StoreDJ will auto-switch at these times.</p>
+      <div class="schedule-grid">
+
+        <div class="slot morning">
+          <div class="slot-header">
+            <span class="slot-name">☀️ Morning</span>
+            <span class="slot-time">8 AM – 12 PM</span>
+          </div>
+          <select id="sched-morning">
+            <option value="old_hindi">Old Hindi classics</option>
+            <option value="new_bollywood">New Bollywood</option>
+            <option value="mixed">Mixed vibes</option>
+            <option value="mellow">Mellow instrumental</option>
+            <option value="devotional">Devotional / soft</option>
+          </select>
+        </div>
+
+        <div class="slot afternoon">
+          <div class="slot-header">
+            <span class="slot-name">🌤 Afternoon</span>
+            <span class="slot-time">12 PM – 5 PM</span>
+          </div>
+          <select id="sched-afternoon">
+            <option value="new_bollywood" selected>New Bollywood</option>
+            <option value="old_hindi">Old Hindi classics</option>
+            <option value="mixed">Mixed vibes</option>
+            <option value="upbeat">Upbeat party</option>
+            <option value="devotional">Devotional / soft</option>
+          </select>
+        </div>
+
+        <div class="slot evening">
+          <div class="slot-header">
+            <span class="slot-name">🌆 Evening</span>
+            <span class="slot-time">5 PM – 8 PM</span>
+          </div>
+          <select id="sched-evening">
+            <option value="mixed" selected>Mixed vibes</option>
+            <option value="old_hindi">Old Hindi classics</option>
+            <option value="new_bollywood">New Bollywood</option>
+            <option value="upbeat">Upbeat party</option>
+            <option value="mellow">Mellow instrumental</option>
+          </select>
+        </div>
+
+        <div class="slot night">
+          <div class="slot-header">
+            <span class="slot-name">🌙 Closing</span>
+            <span class="slot-time">8 PM – close</span>
+          </div>
+          <select id="sched-night">
+            <option value="old_hindi" selected>Old Hindi classics</option>
+            <option value="mellow">Mellow instrumental</option>
+            <option value="mixed">Mixed vibes</option>
+            <option value="new_bollywood">New Bollywood</option>
+          </select>
+        </div>
+
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveSchedule()">Save schedule</button>
+        <button class="btn btn-ghost" onclick="startScheduler()">▶ Start auto-scheduler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3: Play now -->
+  <div class="step">
+    <div class="step-label">Step 03</div>
+    <h2>Play now — pick a mood</h2>
+    <div class="card">
+      <div class="mood-grid">
+        <button class="mood-btn" onclick="playMood('old_hindi', this)">
+          <div class="mood-icon">🎻</div>
+          <div class="mood-label">Old Hindi</div>
+          <div class="mood-sub">Golden era classics</div>
+        </button>
+        <button class="mood-btn" onclick="playMood('new_bollywood', this)">
+          <div class="mood-icon">🎬</div>
+          <div class="mood-label">New Bollywood</div>
+          <div class="mood-sub">2020s hits</div>
+        </button>
+        <button class="mood-btn" onclick="playMood('mixed', this)">
+          <div class="mood-icon">🎶</div>
+          <div class="mood-label">Mixed vibes</div>
+          <div class="mood-sub">Best of both</div>
+        </button>
+        <button class="mood-btn" onclick="playMood('mellow', this)">
+          <div class="mood-icon">🌿</div>
+          <div class="mood-label">Mellow</div>
+          <div class="mood-sub">Calm instrumentals</div>
+        </button>
+        <button class="mood-btn" onclick="playMood('upbeat', this)">
+          <div class="mood-icon">🥁</div>
+          <div class="mood-label">Upbeat</div>
+          <div class="mood-sub">High energy</div>
+        </button>
+        <button class="mood-btn" onclick="playMood('devotional', this)">
+          <div class="mood-icon">🪔</div>
+          <div class="mood-label">Devotional</div>
+          <div class="mood-sub">Bhajans &amp; soft</div>
+        </button>
+      </div>
+
+      <!-- Top-5 playlist picker (appears after you click a mood) -->
+      <div id="mood-picker-wrap" class="mood-picker hidden"></div>
+
+      <!-- Playlist search -->
+      <hr class="divider">
+      <label>Or search your Spotify playlists</label>
+      <div class="search-wrap">
+        <input type="text" id="playlist-search" placeholder="Search playlists..." oninput="searchPlaylists(this.value)">
+        <button class="btn btn-ghost" onclick="fetchMyPlaylists()">Browse all</button>
+      </div>
+      <div id="playlist-results"></div>
+
+      <!-- Now playing -->
+      <div id="now-playing-wrap" class="hidden" style="margin-top:1rem;">
+        <div class="now-playing">
+          <div class="vinyl spinning" id="vinyl"></div>
+          <div class="np-info">
+            <div class="np-track" id="np-track">—</div>
+            <div class="np-meta" id="np-meta">—</div>
+          </div>
+          <div class="np-badge" id="np-badge">LIVE</div>
+        </div>
+        <div id="embed-wrap" class="embed-wrap hidden"></div>
+      </div>
+
+      <!-- Per-mood playlist customisation -->
+      <details class="mood-config" open>
+        <summary>⚙ Customize playlists — click 🔍 Find to pick the right one on Spotify</summary>
+        <p style="font-size:0.72rem;color:var(--muted);margin:0.5rem 0;line-height:1.5;">
+          Paste a full Spotify URL like <code>https://open.spotify.com/playlist/37i9dQZF1DX0XUfTFmNBRM</code>
+          or just the 22-char playlist ID. Saved to this browser.
+        </p>
+        <div class="mood-config-grid" id="mood-config-grid"></div>
+      </details>
+    </div>
+  </div>
+
+  <!-- STEP 4: Log -->
+  <div class="step">
+    <div class="step-label">Activity log</div>
+    <h2>What's happening</h2>
+    <div class="log" id="log">
+      <div class="info">// StoreDJ ready. Connect Spotify to begin.</div>
+    </div>
+  </div>
+
+</main>
+
+<div class="status-bar">
+  <div>STOREDJ v1.0</div>
+  <div>STORE: <span id="status-store">Indian Grocery</span></div>
+  <div>NOW: <span id="status-time">--:--</span></div>
+  <div>SLOT: <span id="status-slot">—</span></div>
+  <div>SCHEDULER: <span id="status-scheduler">OFF</span></div>
+</div>
+
+<script>
+// ── STATE ──
+const state = {
+  accessToken: null,
+  refreshToken: null,
+  appToken: null,
+  appTokenExpires: 0,
+  connected: false,
+  schedulerRunning: false,
+  schedulerInterval: null,
+  demoMode: true,
+  pickerCache: {},   // { mood: [playlists...] } — avoid re-searching
+  playlists: [],
+  // spotifyId = the ID after /playlist/ in a Spotify URL.
+  // Only New Bollywood has a confirmed default (Bollywood Butter). For the other moods,
+  // clicking the tile opens Spotify's playlist search so you can pick the right one.
+  moodMap: {
+    old_hindi:    { name: 'Old Hindi Classics',   query: 'old hindi classics kishore kumar lata mangeshkar mohammed rafi 1960s 1970s bollywood retro', spotifyId: '' },
+    new_bollywood:{ name: 'New Bollywood',         query: 'new bollywood 2023 2024 arijit singh jubin nautiyal hits',                                   spotifyId: '37i9dQZF1DX0XUfTFmNBRM' },
+    mixed:        { name: 'Mixed Vibes',           query: 'bollywood hindi hits mix best',                                                               spotifyId: '' },
+    mellow:       { name: 'Mellow Instrumental',   query: 'hindi instrumental chill bollywood acoustic soft',                                           spotifyId: '' },
+    upbeat:       { name: 'Upbeat Bollywood',      query: 'upbeat bollywood dance party punjabi hits',                                                   spotifyId: '' },
+    devotional:   { name: 'Devotional Bhajans',    query: 'hindi bhajan devotional krishna shiva aarti',                                                 spotifyId: '' },
+  }
+};
+
+function extractSpotifyId(input) {
+  if (!input) return null;
+  const s = input.trim();
+  const m = s.match(/playlist[\/:]([A-Za-z0-9]+)/) || s.match(/^([A-Za-z0-9]{22})$/);
+  return m ? m[1] : null;
+}
+
+// ── TIME ──
+function updateClock() {
+  const now = new Date();
+  document.getElementById('status-time').textContent =
+    now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  updateSlotLabel(now.getHours());
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+function getSlot(hour) {
+  if (hour >= 8  && hour < 12) return 'morning';
+  if (hour >= 12 && hour < 17) return 'afternoon';
+  if (hour >= 17 && hour < 20) return 'evening';
+  return 'night';
+}
+
+function updateSlotLabel(hour) {
+  const slot = getSlot(hour);
+  const labels = { morning:'☀️ Morning', afternoon:'🌤 Afternoon', evening:'🌆 Evening', night:'🌙 Closing' };
+  document.getElementById('status-slot').textContent = labels[slot];
+}
+
+// ── LOG ──
+function log(msg, type='') {
+  const el = document.getElementById('log');
+  const div = document.createElement('div');
+  div.className = type;
+  div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+// ── SPOTIFY OAUTH (Authorization Code + PKCE) ──
+function generateRandomString(length) {
+  const arr = new Uint8Array(length);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, b => ('0' + b.toString(16)).slice(-2)).join('').slice(0, length);
+}
+
+async function sha256(plain) {
+  const data = new TextEncoder().encode(plain);
+  return await crypto.subtle.digest('SHA-256', data);
+}
+
+function base64urlEncode(buf) {
+  return btoa(String.fromCharCode(...new Uint8Array(buf)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+async function connectSpotify() {
+  const clientId = document.getElementById('client-id').value.trim();
+  const redirectUri = document.getElementById('redirect-uri').value.trim();
+  if (!clientId) { log('⚠ Enter your Client ID first', 'err'); return; }
+
+  // Sanity check: are we being served from the redirect URI origin?
+  const expectedOrigin = new URL(redirectUri).origin;
+  if (window.location.origin !== expectedOrigin) {
+    log(`⚠ You are on ${window.location.origin}, but Redirect URI is on ${expectedOrigin}. Serve the HTML via "python3 -m http.server 8888" and open it from ${expectedOrigin}.`, 'err');
+    return;
+  }
+
+  const verifier = generateRandomString(64);
+  const challenge = base64urlEncode(await sha256(verifier));
+
+  // Persist across the redirect so we can finish the exchange on return
+  sessionStorage.setItem('storedj_pkce_verifier', verifier);
+  sessionStorage.setItem('storedj_client_id', clientId);
+  sessionStorage.setItem('storedj_redirect_uri', redirectUri);
+
+  const scopes = [
+    'playlist-read-private',
+    'playlist-modify-public',
+    'playlist-modify-private',
+    'user-modify-playback-state',
+    'user-read-playback-state',
+    'user-read-currently-playing',
+  ].join(' ');
+
+  const params = new URLSearchParams({
+    response_type: 'code',
+    client_id: clientId,
+    scope: scopes,
+    redirect_uri: redirectUri,
+    code_challenge_method: 'S256',
+    code_challenge: challenge,
+  });
+
+  log('Redirecting to Spotify…', 'info');
+  window.location.href = `https://accounts.spotify.com/authorize?${params}`;
+}
+
+async function handleAuthCallback() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  const err = params.get('error');
+  if (err) { log(`OAuth error: ${err}`, 'err'); window.history.replaceState({}, '', window.location.pathname); return; }
+  if (!code) return;
+
+  const verifier = sessionStorage.getItem('storedj_pkce_verifier');
+  const clientId = sessionStorage.getItem('storedj_client_id');
+  const redirectUri = sessionStorage.getItem('storedj_redirect_uri');
+  if (!verifier || !clientId) { log('Missing PKCE verifier — click Connect again', 'err'); return; }
+
+  log('Exchanging code for access token…', 'info');
+  try {
+    const res = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: clientId,
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: redirectUri,
+        code_verifier: verifier,
+      }),
+    });
+    const data = await res.json();
+    if (data.access_token) {
+      state.accessToken = data.access_token;
+      state.refreshToken = data.refresh_token || null;
+      document.getElementById('client-id').value = clientId;
+      document.getElementById('redirect-uri').value = redirectUri;
+      setConnected(true);
+      // Clean up URL so a refresh doesn't re-trigger exchange
+      window.history.replaceState({}, '', window.location.pathname);
+    } else {
+      log(`Token exchange failed: ${data.error_description || data.error || 'unknown'}`, 'err');
+    }
+  } catch(e) {
+    log(`Token exchange error: ${e.message}`, 'err');
+  }
+}
+
+function setConnected(val) {
+  state.connected = val;
+  document.getElementById('conn-dot').className = 'dot' + (val ? ' connected' : '');
+  document.getElementById('conn-label').textContent = val ? 'CONNECTED' : 'NOT CONNECTED';
+  if (val) log('✓ Spotify connected — uncheck 🧪 Demo Mode (top right) to play on your Spotify device', 'ok');
+}
+
+// ── DEVICE HELPERS ──
+async function listDevices() {
+  if (!state.accessToken) return [];
+  try {
+    const res = await fetch('https://api.spotify.com/v1/me/player/devices', {
+      headers: { Authorization: `Bearer ${state.accessToken}` },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.devices || [];
+  } catch { return []; }
+}
+
+async function transferPlaybackTo(deviceId) {
+  return spotifyPut('https://api.spotify.com/v1/me/player', { device_ids: [deviceId], play: false });
+}
+
+function testConnection() {
+  const token = getToken();
+  if (!token) { log('No token. Paste your access token below or use Connect.', 'err'); return; }
+  spotifyGet('https://api.spotify.com/v1/me').then(d => {
+    if (d.display_name) {
+      log(`✓ Logged in as: ${d.display_name}`, 'ok');
+      setConnected(true);
+    }
+  }).catch(() => log('Connection failed — check token', 'err'));
+}
+
+function getToken() {
+  return state.accessToken;
+}
+
+// ── SPOTIFY API HELPERS ──
+async function spotifyGet(url) {
+  const token = getToken();
+  if (!token) throw new Error('No token');
+  const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  if (!r.ok) throw new Error(`Spotify API error: ${r.status}`);
+  return r.json();
+}
+
+async function spotifyPost(url, body) {
+  const token = getToken();
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  return r;
+}
+
+async function spotifyPut(url, body={}) {
+  const token = getToken();
+  const r = await fetch(url, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  return r;
+}
+
+// ── PLAY MOOD (always shows top-5 picker, user chooses, we play) ──
+async function playMood(mood, btn) {
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  return showMoodPicker(mood);
+}
+
+// ── CLIENT CREDENTIALS (app-level token, lets us search without user OAuth) ──
+async function getAppToken() {
+  if (state.appToken && Date.now() < state.appTokenExpires) return state.appToken;
+  const clientId = document.getElementById('client-id').value.trim();
+  const clientSecret = document.getElementById('client-secret').value.trim();
+  if (!clientId || !clientSecret) return null;
+  try {
+    const res = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Basic ' + btoa(`${clientId}:${clientSecret}`),
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: 'grant_type=client_credentials',
+    });
+    const data = await res.json();
+    if (data.access_token) {
+      state.appToken = data.access_token;
+      state.appTokenExpires = Date.now() + ((data.expires_in || 3600) - 60) * 1000;
+      log('✓ App token ready — picker enabled', 'ok');
+      return state.appToken;
+    }
+    log(`App token error: ${data.error_description || data.error || 'unknown'}`, 'err');
+  } catch(e) { log(`App token fetch failed: ${e.message}`, 'err'); }
+  return null;
+}
+
+async function getSearchToken() {
+  return state.accessToken || await getAppToken();
+}
+
+async function searchPlaylistsForMood(mood, limit = 5) {
+  const m = state.moodMap[mood];
+  const token = await getSearchToken();
+  if (!token) return { token: null, items: [] };
+  try {
+    const res = await fetch(
+      `https://api.spotify.com/v1/search?q=${encodeURIComponent(m.query)}&type=playlist&limit=${limit}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (!res.ok) { log(`Search HTTP ${res.status}`, 'err'); return { token, items: [] }; }
+    const data = await res.json();
+    return { token, items: (data.playlists?.items || []).filter(p => p) };
+  } catch(e) { log(`Search error: ${e.message}`, 'err'); return { token: null, items: [] }; }
+}
+
+// ── MOOD PICKER UI ──
+async function showMoodPicker(mood) {
+  const m = state.moodMap[mood];
+  log(`Finding top 5 "${m.name}" playlists…`, 'info');
+  const { token, items } = await searchPlaylistsForMood(mood, 5);
+  if (!token) {
+    log(`⚠ Paste Client ID + Client Secret to enable the in-app picker.`, 'err');
+    return;
+  }
+  if (!items.length) {
+    log(`No playlists found for "${m.name}"`, 'err');
+    return;
+  }
+  state.pickerCache[mood] = items;
+  renderMoodPicker(mood, m.name, items);
+}
+
+function renderMoodPicker(mood, moodName, items) {
+  const wrap = document.getElementById('mood-picker-wrap');
+  wrap.classList.remove('hidden');
+  const currentId = state.moodMap[mood].spotifyId;
+  wrap.innerHTML = `
+    <div class="picker-header">
+      <span>Top 5 for <strong>${escHtml(moodName)}</strong> — click one to play</span>
+      <button class="picker-close" onclick="closeMoodPicker()" title="Close">✕</button>
+    </div>
+    <div class="picker-grid">
+      ${items.map((p, i) => {
+        const isCurrent = p.id === currentId;
+        const img = p.images?.[0]?.url;
+        const owner = escHtml(p.owner?.display_name || 'Spotify');
+        const total = p.tracks?.total ?? '?';
+        return `
+          <div class="picker-card${isCurrent ? ' current' : ''}" onclick="pickMoodPlaylist('${mood}', '${p.id}')">
+            <div class="picker-num">${i + 1}</div>
+            ${img ? `<img src="${img}" alt="">` : '<div class="picker-img-ph"></div>'}
+            <div class="picker-info">
+              <div class="picker-name">${escHtml(p.name)}</div>
+              <div class="picker-meta">${total} tracks · ${owner}${isCurrent ? ' · CURRENT' : ''}</div>
+            </div>
+            <div class="picker-play">▶</div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function pickMoodPlaylist(mood, playlistId) {
+  const cached = (state.pickerCache[mood] || []).find(p => p.id === playlistId);
+  const name = cached?.name || 'Playlist';
+  const total = cached?.tracks?.total ?? '?';
+
+  // Save as default for this mood
+  state.moodMap[mood].spotifyId = playlistId;
+  const saved = JSON.parse(localStorage.getItem('storedj_mood_urls') || '{}');
+  saved[mood] = playlistId;
+  localStorage.setItem('storedj_mood_urls', JSON.stringify(saved));
+  const input = document.getElementById('mood-url-' + mood);
+  if (input) input.value = playlistId;
+
+  log(`✓ Selected "${name}" for ${state.moodMap[mood].name}`, 'ok');
+  closeMoodPicker();
+
+  // Play it — embed in demo, API in live
+  if (state.demoMode) {
+    showNowPlayingEmbed(name, mood, playlistId);
+  } else {
+    await playOnSpotify(playlistId, name, mood, total);
+  }
+}
+
+async function playOnSpotify(playlistId, name, mood, total) {
+  if (!state.accessToken) {
+    log('⚠ Not connected. Click "Connect to Spotify" in Step 01 first.', 'err');
+    return;
+  }
+
+  let res = await spotifyPut('https://api.spotify.com/v1/me/player/play', {
+    context_uri: `spotify:playlist:${playlistId}`,
+    offset: { position: 0 },
+  });
+
+  // 404 = no active device → try transferring to the first available device and retrying
+  if (res.status === 404) {
+    const devices = await listDevices();
+    if (devices.length) {
+      const target = devices.find(d => !d.is_restricted) || devices[0];
+      log(`No active device — transferring to "${target.name}"…`, 'info');
+      await transferPlaybackTo(target.id);
+      await new Promise(r => setTimeout(r, 600)); // give Spotify a moment
+      res = await spotifyPut('https://api.spotify.com/v1/me/player/play', {
+        context_uri: `spotify:playlist:${playlistId}`,
+        offset: { position: 0 },
+      });
+    }
+  }
+
+  if (res.status === 204) {
+    log(`✓ Playing "${name}" on Spotify`, 'ok');
+    showNowPlaying(name, `${mood.replace('_',' ')} · ${total} tracks`);
+  } else if (res.status === 404) {
+    log('No Spotify devices found. Open Spotify on your phone/iPad, or go to open.spotify.com — opening it now.', 'err');
+    window.open('https://open.spotify.com/', '_blank', 'noopener');
+  } else if (res.status === 401) {
+    log('Token expired — click "Connect to Spotify" again.', 'err');
+  } else if (res.status === 403) {
+    let msg = 'Premium required for API playback';
+    try { const err = await res.json(); if (err.error?.message) msg = err.error.message; } catch {}
+    log(`Spotify rejected: ${msg}`, 'err');
+  } else {
+    log(`Play returned HTTP ${res.status}`, 'err');
+  }
+}
+
+function closeMoodPicker() {
+  const wrap = document.getElementById('mood-picker-wrap');
+  if (!wrap) return;
+  wrap.classList.add('hidden');
+  wrap.innerHTML = '';
+}
+
+// ── SHOW NOW PLAYING ──
+function showNowPlaying(track, meta) {
+  document.getElementById('now-playing-wrap').classList.remove('hidden');
+  document.getElementById('np-track').textContent = track;
+  document.getElementById('np-meta').textContent = meta;
+  document.getElementById('embed-wrap').classList.add('hidden');
+}
+
+
+function showNowPlayingEmbed(track, mood, spotifyId) {
+  document.getElementById('now-playing-wrap').classList.remove('hidden');
+  document.getElementById('np-track').textContent = track;
+  document.getElementById('np-meta').textContent = `${mood.replace('_',' ')} · Spotify embed`;
+  const wrap = document.getElementById('embed-wrap');
+  wrap.classList.remove('hidden');
+  // Recreate iframe each time so Spotify re-initializes playback
+  wrap.innerHTML = `<iframe
+    src="https://open.spotify.com/embed/playlist/${spotifyId}?utm_source=generator&autoplay=1"
+    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+    loading="lazy"></iframe>`;
+  log(`✓ Embed ready. Press ▶ in the player below.`, 'ok');
+}
+
+async function toggleDemoMode(on) {
+  state.demoMode = on;
+  document.getElementById('demo-toggle-label').classList.toggle('on', on);
+  log(on ? '🧪 Demo Mode ON — using Spotify embed' : '🔌 Live Mode — using Spotify API', 'info');
+
+  if (on) return;
+
+  // Leaving demo mode — hide embed and verify we're ready for API playback
+  const wrap = document.getElementById('embed-wrap');
+  if (wrap) { wrap.classList.add('hidden'); wrap.innerHTML = ''; }
+
+  if (!state.accessToken) {
+    log('⚠ Not connected. Click "Connect to Spotify" in Step 01, then you can play on your device.', 'err');
+    return;
+  }
+  const devices = await listDevices();
+  if (!devices.length) {
+    log('⚠ No Spotify devices found. Open Spotify on a phone/iPad/desktop — or we can launch the Web Player for you.', 'err');
+    return;
+  }
+  const active = devices.find(d => d.is_active);
+  const names = devices.map(d => d.name + (d.is_active ? ' ★' : '')).join(', ');
+  if (active) {
+    log(`✓ Ready. Devices: ${names}. Pick a mood → pick a playlist → it plays on ${active.name}.`, 'ok');
+  } else {
+    log(`Devices: ${names}. None active — Store DJ will auto-transfer to the first one when you pick a playlist.`, 'info');
+  }
+}
+
+// ── PLAYLIST SEARCH ──
+let searchTimeout;
+function searchPlaylists(q) {
+  clearTimeout(searchTimeout);
+  if (!q) { document.getElementById('playlist-results').innerHTML = ''; return; }
+  searchTimeout = setTimeout(() => doSearch(q), 400);
+}
+
+async function doSearch(q) {
+  const token = getToken();
+  if (!token) return;
+  try {
+    const d = await spotifyGet(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=playlist&limit=6`);
+    renderResults(d.playlists?.items?.filter(p=>p) || []);
+  } catch(e) { log('Search error: ' + e.message, 'err'); }
+}
+
+async function fetchMyPlaylists() {
+  const token = getToken();
+  if (!token) { log('Connect Spotify first', 'err'); return; }
+  try {
+    const d = await spotifyGet('https://api.spotify.com/v1/me/playlists?limit=20');
+    renderResults(d.items?.filter(p=>p) || []);
+    log(`Loaded ${d.items.length} of your playlists`, 'ok');
+  } catch(e) { log('Error: ' + e.message, 'err'); }
+}
+
+function renderResults(playlists) {
+  const el = document.getElementById('playlist-results');
+  if (!playlists.length) { el.innerHTML = '<p style="font-size:0.78rem;color:var(--muted);padding:0.5rem">No results</p>'; return; }
+  el.innerHTML = playlists.map(p => `
+    <div class="playlist-result" onclick="playPlaylist('${p.uri}','${escHtml(p.name)}')">
+      ${p.images?.[0] ? `<img src="${p.images[0].url}" alt="">` : '<div style="width:36px;height:36px;background:var(--border);border-radius:4px"></div>'}
+      <div>
+        <div class="pr-name">${escHtml(p.name)}</div>
+        <div class="pr-tracks">${p.tracks?.total ?? '?'} tracks</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function playPlaylist(uri, name) {
+  const res = await spotifyPut('https://api.spotify.com/v1/me/player/play', { context_uri: uri, offset: { position: 0 } });
+  if (res.status === 204) {
+    log(`✓ Playing: ${name}`, 'ok');
+    showNowPlaying(name, 'Custom playlist');
+  } else {
+    log(`Could not play — status ${res.status}`, 'err');
+  }
+}
+
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+
+// ── SCHEDULE ──
+function saveSchedule() {
+  console.log('[StoreDJ] saveSchedule() called');
+  let schedule;
+  try {
+    schedule = {
+      morning:   document.getElementById('sched-morning').value,
+      afternoon: document.getElementById('sched-afternoon').value,
+      evening:   document.getElementById('sched-evening').value,
+      night:     document.getElementById('sched-night').value,
+    };
+    localStorage.setItem('storedj_schedule', JSON.stringify(schedule));
+    log(`✓ Schedule saved: morning=${schedule.morning}, afternoon=${schedule.afternoon}, evening=${schedule.evening}, closing=${schedule.night}`, 'ok');
+    console.log('[StoreDJ] schedule persisted', schedule);
+  } catch (e) {
+    log(`Could not save: ${e.message}`, 'err');
+    console.error('[StoreDJ] saveSchedule error', e);
+    return;
+  }
+
+  // Auto-start the scheduler (wrapped so the save itself is never blocked)
+  try {
+    lastPlayedSlot = null;
+    if (!state.schedulerRunning) {
+      startScheduler();
+    } else {
+      runSchedulerTick();
+    }
+  } catch (e) {
+    log(`Auto-start failed: ${e.message} (schedule saved OK)`, 'err');
+    console.error('[StoreDJ] auto-start error', e);
+  }
+}
+
+function getSchedule() {
+  const saved = localStorage.getItem('storedj_schedule');
+  if (saved) return JSON.parse(saved);
+  return {
+    morning: document.getElementById('sched-morning').value,
+    afternoon: document.getElementById('sched-afternoon').value,
+    evening: document.getElementById('sched-evening').value,
+    night: document.getElementById('sched-night').value,
+  };
+}
+
+function startScheduler() {
+  if (!state.demoMode && !getToken()) { log('Connect Spotify first, or turn on 🧪 Demo Mode', 'err'); return; }
+  if (state.schedulerRunning) {
+    clearInterval(state.schedulerInterval);
+    state.schedulerRunning = false;
+    document.getElementById('status-scheduler').textContent = 'OFF';
+    log('Scheduler stopped', 'info');
+    return;
+  }
+  state.schedulerRunning = true;
+  document.getElementById('status-scheduler').textContent = 'ON';
+  log('✓ Auto-scheduler started — checks every minute', 'ok');
+  runSchedulerTick();
+  state.schedulerInterval = setInterval(runSchedulerTick, 60000);
+}
+
+let lastPlayedSlot = null;
+async function runSchedulerTick() {
+  const hour = new Date().getHours();
+  const slot = getSlot(hour);
+  if (slot === lastPlayedSlot) return;
+  const schedule = getSchedule();
+  const mood = schedule[slot];
+  if (!mood) return;
+  lastPlayedSlot = slot;
+
+  // Mark the matching mood button as active (visual feedback)
+  document.querySelectorAll('.mood-btn').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('onclick')?.includes(`'${mood}'`));
+  });
+
+  const m = state.moodMap[mood];
+  if (!m) return;
+
+  // Auto-pick the #1 search result if no playlist saved for this mood
+  if (!m.spotifyId) {
+    log(`⏰ Slot → ${slot}: no playlist set for "${m.name}" — auto-picking #1 search result…`, 'info');
+    const { token, items } = await searchPlaylistsForMood(mood, 1);
+    if (!token || !items.length) {
+      log(`⚠ Scheduler can't auto-pick — paste Client ID + Secret, or click "${m.name}" and choose manually.`, 'err');
+      return;
+    }
+    m.spotifyId = items[0].id;
+    const saved = JSON.parse(localStorage.getItem('storedj_mood_urls') || '{}');
+    saved[mood] = items[0].id;
+    localStorage.setItem('storedj_mood_urls', JSON.stringify(saved));
+    const input = document.getElementById('mood-url-' + mood);
+    if (input) input.value = items[0].id;
+    log(`✓ Auto-picked "${items[0].name}"`, 'ok');
+  }
+
+  log(`⏰ Slot → ${slot} → playing ${m.name}`, 'info');
+  if (state.demoMode) {
+    showNowPlayingEmbed(m.name, mood, m.spotifyId);
+  } else {
+    await playOnSpotify(m.spotifyId, m.name, mood, '?');
+  }
+}
+
+// ── PER-MOOD PLAYLIST URL EDITOR ──
+function renderMoodConfig() {
+  const grid = document.getElementById('mood-config-grid');
+  if (!grid) return;
+  grid.innerHTML = Object.entries(state.moodMap).map(([key, m]) => {
+    const searchUrl = `https://open.spotify.com/search/${encodeURIComponent(m.query)}/playlists`;
+    return `
+    <div class="mood-config-row">
+      <span>${m.name}</span>
+      <input type="text"
+             id="mood-url-${key}"
+             value="${m.spotifyId || ''}"
+             placeholder="Paste Spotify playlist URL or ID"
+             oninput="updateMoodUrl('${key}', this.value)">
+      <a class="find-btn" href="${searchUrl}" target="_blank" rel="noopener"
+         title="Open Spotify playlist search for ${m.name}">🔍 Find</a>
+    </div>`;
+  }).join('');
+}
+
+function updateMoodUrl(key, raw) {
+  const id = extractSpotifyId(raw) || raw.trim() || null;
+  state.moodMap[key].spotifyId = id;
+  const saved = JSON.parse(localStorage.getItem('storedj_mood_urls') || '{}');
+  saved[key] = id;
+  localStorage.setItem('storedj_mood_urls', JSON.stringify(saved));
+}
+
+function restoreMoodUrls() {
+  const saved = JSON.parse(localStorage.getItem('storedj_mood_urls') || '{}');
+  Object.keys(saved).forEach(k => {
+    if (state.moodMap[k] && saved[k]) state.moodMap[k].spotifyId = saved[k];
+  });
+}
+
+// ── RESTORE SAVED SCHEDULE ──
+window.addEventListener('load', async () => {
+  restoreMoodUrls();
+  renderMoodConfig();
+
+  const saved = localStorage.getItem('storedj_schedule');
+  if (saved) {
+    const s = JSON.parse(saved);
+    ['morning','afternoon','evening','night'].forEach(k => {
+      const el = document.getElementById('sched-' + k);
+      if (el && s[k]) el.value = s[k];
+    });
+    log('Schedule restored from last session', 'info');
+  }
+
+  // Finish the PKCE flow if we were just redirected back from Spotify
+  await handleAuthCallback();
+
+  log('🧪 Demo Mode is ON — click any mood to play via Spotify embed.', 'info');
+});
+</script>
+</body>
+</html>
