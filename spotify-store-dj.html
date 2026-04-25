@@ -84,37 +84,141 @@
     align-items: center;
     gap: 1.2rem;
   }
-  .demo-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.72rem;
-    letter-spacing: 0.05em;
-    color: var(--deep);
-    background: rgba(232,113,42,0.08);
-    border: 1px solid rgba(232,113,42,0.25);
-    padding: 0.35rem 0.7rem;
-    border-radius: 20px;
-    cursor: pointer;
-    user-select: none;
-  }
-  .demo-toggle input { cursor: pointer; accent-color: var(--saffron); }
-  .demo-toggle.on { background: rgba(232,113,42,0.18); }
-
-  /* Embed iframe */
-  .embed-wrap {
-    margin-top: 1rem;
-    border-radius: 12px;
+  /* Unified now-playing panel: slim strip + scrollable embed = ONE visual card */
+  .np-panel {
+    border: 1px solid #2a2a2a;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
     overflow: hidden;
-    border: 1px solid var(--border);
+    color: var(--cream);
+  }
+  .np-strip {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.55rem 0.85rem;
+  }
+  .np-strip-track {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.92rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--cream);
+    opacity: 0.92;
+  }
+  .np-strip-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+  }
+  .np-panel #np-media {
+    border-top: 1px solid rgba(253,246,236,0.08);
     background: #000;
   }
-  .embed-wrap iframe {
+  #np-media.hidden { display: none; }
+  #np-media iframe {
     display: block;
     width: 100%;
-    height: 352px;
     border: 0;
+    border-radius: 0;
+  }
+
+  /* Custom live-mode tracklist (replaces the embed iframe in live mode so we can
+     drive the "currently playing" highlight from /me/player — the embed iframe's
+     own highlight is sandboxed and can't be told what to show). */
+  .np-tracklist {
+    background: #0a0a0a;
+    color: var(--cream);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+  .np-tracklist-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 0.7rem 1rem 0.5rem;
+    border-bottom: 1px solid rgba(253,246,236,0.08);
+  }
+  .np-tracklist-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--cream);
+  }
+  .np-tracklist-count {
+    font-size: 0.75rem;
+    color: rgba(253,246,236,0.5);
+    font-family: 'DM Mono', monospace;
+  }
+  .np-tracklist-body {
+    max-height: 380px;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+  }
+  .np-tracklist-body::-webkit-scrollbar { width: 8px; }
+  .np-tracklist-body::-webkit-scrollbar-track { background: transparent; }
+  .np-tracklist-body::-webkit-scrollbar-thumb {
+    background: rgba(253,246,236,0.15);
+    border-radius: 4px;
+  }
+  .np-track-row {
+    display: grid;
+    grid-template-columns: 32px 1fr auto;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid rgba(253,246,236,0.04);
+    transition: background 0.15s ease;
+    cursor: default;
+  }
+  .np-track-row:hover { background: rgba(253,246,236,0.04); }
+  .np-track-row.active {
+    background: linear-gradient(90deg, rgba(232,113,42,0.18) 0%, rgba(232,113,42,0.05) 100%);
+    border-left: 3px solid var(--saffron);
+    padding-left: calc(1rem - 3px);
+  }
+  .np-track-row.active .np-track-title { color: var(--saffron); font-weight: 600; }
+  .np-track-num {
+    color: rgba(253,246,236,0.4);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    text-align: center;
+  }
+  .np-track-row.active .np-track-num::before {
+    content: '▶';
+    color: var(--saffron);
+  }
+  .np-track-row.active .np-track-num { font-size: 0; /* hide number, show ▶ via ::before */ }
+  .np-track-info { min-width: 0; }
+  .np-track-title {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--cream);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .np-track-artists {
+    font-size: 0.75rem;
+    color: rgba(253,246,236,0.55);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 1px;
+  }
+  .np-track-dur {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: rgba(253,246,236,0.4);
+  }
+  .np-tracklist-loading {
+    padding: 2rem;
+    text-align: center;
+    color: rgba(253,246,236,0.5);
+    font-size: 0.85rem;
   }
 
   /* Per-mood URL editor */
@@ -204,10 +308,10 @@
     align-items: center;
     padding: 0.55rem 0.6rem;
     border-radius: 8px;
-    cursor: pointer;
     transition: background 0.15s, border-color 0.15s;
     border: 1px solid transparent;
   }
+  .peek-panel.hidden { display: none; }
   .picker-card:hover {
     background: rgba(232,113,42,0.06);
     border-color: rgba(232,113,42,0.25);
@@ -253,6 +357,70 @@
     padding-right: 0.4rem;
   }
   .picker-card.current .picker-play { color: var(--green); }
+
+  .picker-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding-right: 0.3rem;
+  }
+  .picker-icon-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 6px;
+    cursor: pointer;
+    padding: 4px 8px;
+    font-size: 0.85rem;
+    line-height: 1;
+    transition: all 0.15s;
+  }
+  .picker-icon-btn:hover { color: var(--saffron); border-color: var(--saffron); }
+  .picker-icon-btn.play { color: var(--green); border-color: rgba(29,185,84,0.4); }
+  .picker-icon-btn.play:hover { background: var(--green); color: white; }
+  .picker-icon-btn:disabled, .picker-icon-btn.disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .peek-panel {
+    grid-column: 1 / -1;
+    margin-top: 0.5rem;
+    padding: 0.6rem 0.7rem;
+    background: rgba(253,246,236,0.6);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    max-height: 260px;
+    overflow-y: auto;
+  }
+  .peek-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    margin-bottom: 0.4rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .peek-track {
+    display: grid;
+    grid-template-columns: 22px 1fr auto;
+    gap: 0.6rem;
+    align-items: center;
+    padding: 0.25rem 0.2rem;
+    font-size: 0.78rem;
+    border-radius: 4px;
+  }
+  .peek-track:hover { background: rgba(232,113,42,0.05); }
+  .peek-num { font-family: 'DM Mono', monospace; color: var(--muted); font-size: 0.7rem; text-align: right; }
+  .peek-name { color: var(--deep); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .peek-artist { color: var(--muted); font-size: 0.7rem; }
+  .peek-dur { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted); }
+  .peek-loading, .peek-empty { text-align: center; padding: 0.8rem; font-size: 0.78rem; color: var(--muted); }
 
   main {
     max-width: 860px;
@@ -387,6 +555,26 @@
     font-family: 'DM Mono', monospace;
   }
 
+  .slot-time-input {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    padding: 0.2rem 0.35rem;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: var(--cream);
+    color: var(--deep);
+    outline: none;
+    cursor: pointer;
+  }
+  .slot-time-input:focus { border-color: var(--saffron); }
+
+  .slot-until {
+    font-size: 0.68rem;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    margin: -0.2rem 0 0.5rem 0;
+  }
+
   .slot select {
     width: 100%;
     padding: 0.45rem 0.6rem;
@@ -465,6 +653,12 @@
     color: var(--deep);
   }
   .btn-ghost:hover { border-color: var(--saffron); background: rgba(232,113,42,0.05); }
+  .btn.scheduler-on {
+    background: var(--green);
+    color: white;
+    border-color: var(--green);
+  }
+  .btn.scheduler-on:hover { background: var(--green-dark); border-color: var(--green-dark); }
 
   .btn-row {
     display: flex;
@@ -474,52 +668,114 @@
     margin-top: 1rem;
   }
 
-  /* ── NOW PLAYING ── */
+  /* ── NOW PLAYING (Spotify-style bar) ── */
   .now-playing {
-    border: 1px solid var(--border);
+    border: 1px solid #2a2a2a;
     border-radius: 14px;
-    padding: 1.25rem 1.5rem;
-    background: var(--deep);
+    padding: 0.9rem 1.1rem;
+    background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
     color: var(--cream);
-    display: flex;
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
     align-items: center;
     gap: 1rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
   }
 
-  .vinyl {
-    width: 52px; height: 52px;
-    border-radius: 50%;
-    background: conic-gradient(#333 0deg, #444 45deg, #333 90deg, #444 135deg, #333 180deg, #444 225deg, #333 270deg, #444 315deg, #333 360deg);
-    position: relative;
+  .np-art {
+    width: 64px; height: 64px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: #222;
     flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
   }
-  .vinyl::after {
-    content: '';
+  .np-art.placeholder {
+    background: conic-gradient(#2a2a2a 0deg, #3a3a3a 90deg, #2a2a2a 180deg, #3a3a3a 270deg, #2a2a2a 360deg);
+    position: relative;
+  }
+  .np-art.placeholder::after {
+    content: '♪';
     position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%,-50%);
-    width: 14px; height: 14px;
-    border-radius: 50%;
-    background: var(--saffron);
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--saffron);
+    font-size: 1.6rem;
   }
-  .vinyl.spinning {
-    animation: spin 2s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
 
-  .np-info { flex: 1; }
-  .np-track { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; }
-  .np-meta { font-size: 0.75rem; color: rgba(253,246,236,0.6); margin-top: 0.2rem; font-family: 'DM Mono', monospace; }
+  .np-info { min-width: 0; }
+  .np-type {
+    font-size: 0.62rem;
+    font-family: 'DM Mono', monospace;
+    color: rgba(253,246,236,0.45);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.2rem;
+  }
+  .np-track {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .np-meta {
+    font-size: 0.75rem;
+    color: rgba(253,246,236,0.6);
+    margin-top: 0.15rem;
+    font-family: 'DM Sans', sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .np-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .np-btn {
+    background: transparent;
+    border: 1px solid rgba(253,246,236,0.2);
+    color: rgba(253,246,236,0.85);
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+  .np-btn:hover { border-color: var(--green); color: var(--green); }
+  .np-btn.play {
+    width: 44px; height: 44px;
+    background: var(--green);
+    border-color: var(--green);
+    color: #000;
+    font-size: 1.1rem;
+  }
+  .np-btn.play:hover { background: #1ed760; border-color: #1ed760; color: #000; transform: scale(1.05); }
+  .np-btn.active { color: var(--green); border-color: var(--green); }
 
   .np-badge {
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     font-family: 'DM Mono', monospace;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     background: var(--saffron);
     color: white;
-    padding: 0.25rem 0.6rem;
+    padding: 0.25rem 0.55rem;
     border-radius: 20px;
+  }
+  @media (max-width: 640px) {
+    .now-playing { grid-template-columns: auto 1fr; grid-template-rows: auto auto; }
+    .np-controls { grid-column: 1 / -1; justify-content: center; }
+    .np-badge { display: none; }
   }
 
   /* ── LOG ── */
@@ -606,9 +862,291 @@
 
   .hidden { display: none !important; }
 
+  /* ── SCHEDULE MANAGER (v2) ── */
+  .sched-toolbar {
+    display: flex; gap: 0.5rem; flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  .sched-toolbar select {
+    flex: 1; min-width: 180px;
+    padding: 0.5rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: white;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    color: var(--deep);
+    cursor: pointer;
+  }
+  .btn-mini {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.75rem;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: white;
+    color: var(--deep);
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+  }
+  .btn-mini:hover { border-color: var(--saffron); color: var(--saffron); }
+  .btn-mini.danger:hover { border-color: #e55; color: #e55; }
+
+  .phase-list { display: grid; gap: 0.55rem; margin-bottom: 0.9rem; }
+  .phase-row {
+    display: grid;
+    grid-template-columns: 28px 1fr 175px 1.2fr 30px;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.55rem 0.65rem;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    position: relative;
+  }
+  .phase-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-align: center;
+    user-select: none;
+  }
+  .phase-row input[type="text"],
+  .phase-row input[type="time"],
+  .phase-row select {
+    padding: 0.4rem 0.55rem;
+    font-size: 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+  }
+  .phase-row input[type="time"] { font-family: 'DM Mono', monospace; }
+  .time-picker {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 3px;
+  }
+  .time-picker select {
+    padding: 0.4rem 0.25rem;
+    font-size: 0.78rem;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: var(--cream);
+    font-family: 'DM Mono', monospace;
+    outline: none;
+    text-align: center;
+    text-align-last: center;
+    cursor: pointer;
+  }
+  .time-picker select:hover { border-color: var(--saffron); }
+  .time-picker select:focus { border-color: var(--saffron); background: white; }
+  .phase-remove {
+    background: none; border: 0; cursor: pointer;
+    color: #c55;
+    font-size: 1.1rem;
+    width: 28px; height: 28px;
+    border-radius: 5px;
+  }
+  .phase-remove:hover { background: rgba(200,85,85,0.12); }
+  .phase-add {
+    width: 100%;
+    padding: 0.55rem;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--saffron);
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+  }
+  .phase-add:hover { border-color: var(--saffron); background: rgba(232,113,42,0.04); }
+
+  /* ── PICKER TABS (playlists / songs) ── */
+  .picker-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: rgba(232,113,42,0.04);
+  }
+  .picker-tab {
+    flex: 1;
+    padding: 0.55rem 1rem;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+  .picker-tab.active {
+    background: white;
+    color: var(--saffron);
+    border-bottom: 2px solid var(--saffron);
+  }
+  .picker-tab:hover:not(.active) { color: var(--deep); }
+
+  /* ── MOOD CREATOR ── */
+  .mood-btn.create {
+    border-style: dashed;
+    color: var(--saffron);
+    border-color: rgba(232,113,42,0.4);
+  }
+  .mood-btn.create:hover { background: rgba(232,113,42,0.06); }
+  .mood-btn { position: relative; }
+  .mood-actions {
+    position: absolute;
+    top: 3px; right: 3px;
+    display: flex;
+    gap: 1px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .mood-btn:hover .mood-actions,
+  .mood-btn:focus-within .mood-actions { opacity: 1; }
+  .mood-icon-btn {
+    background: rgba(253,246,236,0.9);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    cursor: pointer;
+    padding: 2px 5px;
+    font-size: 0.7rem;
+    line-height: 1;
+    color: var(--muted);
+  }
+  .mood-icon-btn:hover { color: var(--saffron); border-color: var(--saffron); }
+  .mood-icon-btn.del:hover { color: #c55; border-color: #c55; }
+
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(26,18,8,0.55);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000;
+  }
+  .modal {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    width: min(440px, 92vw);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  }
+  .modal h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    margin-bottom: 1rem;
+  }
+  .modal .fields { gap: 0.7rem; }
+  .modal-footer {
+    display: flex; gap: 0.5rem; justify-content: flex-end;
+    margin-top: 1.25rem;
+  }
+
+  /* ── MOOD LIBRARY (Step 04) ── */
+  .library-grid { display: grid; gap: 0.75rem; }
+  .lib-mood {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: white;
+    overflow: hidden;
+  }
+  .lib-mood-header {
+    display: flex; align-items: center; gap: 0.7rem;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    background: rgba(232,113,42,0.03);
+    user-select: none;
+  }
+  .lib-mood-header:hover { background: rgba(232,113,42,0.07); }
+  .lib-mood-icon { font-size: 1.2rem; }
+  .lib-mood-title { font-weight: 500; font-size: 0.92rem; flex: 1; }
+  .lib-mood-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    background: var(--cream);
+    padding: 0.15rem 0.55rem;
+    border-radius: 20px;
+  }
+  .lib-mood-toggle {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--saffron);
+  }
+  .lib-body { padding: 0.6rem 0.7rem 0.8rem; border-top: 1px solid var(--border); }
+  .queue-item {
+    display: grid;
+    grid-template-columns: 24px 42px 1fr auto;
+    gap: 0.6rem;
+    align-items: center;
+    padding: 0.5rem 0.55rem;
+    border-radius: 7px;
+    border: 1px solid transparent;
+    margin-bottom: 0.25rem;
+  }
+  .queue-item:hover { background: rgba(232,113,42,0.04); border-color: rgba(232,113,42,0.15); }
+  .queue-item img, .queue-item .q-ph {
+    width: 42px; height: 42px; border-radius: 4px; object-fit: cover;
+    background: var(--border); display: block;
+  }
+  .q-num { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--muted); text-align: center; }
+  .q-info { min-width: 0; }
+  .q-name {
+    font-size: 0.85rem; font-weight: 500;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .q-meta {
+    font-size: 0.68rem; color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .q-type {
+    display: inline-block;
+    font-size: 0.6rem;
+    padding: 0.08rem 0.4rem;
+    border-radius: 10px;
+    margin-right: 4px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.05em;
+  }
+  .q-type.playlist { background: rgba(232,113,42,0.12); color: var(--saffron); }
+  .q-type.track { background: rgba(29,185,84,0.12); color: var(--green); }
+  .q-controls { display: flex; gap: 2px; }
+  .queue-row { margin-bottom: 0.25rem; }
+  .lib-peek {
+    margin: 0 0.3rem 0.5rem 0.3rem;
+    padding: 0.5rem;
+    background: rgba(253,246,236,0.6);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .lib-peek.hidden { display: none; }
+  .q-btn {
+    background: none; border: 0; cursor: pointer;
+    padding: 0.3rem 0.4rem;
+    border-radius: 4px;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  .q-btn:hover { background: rgba(232,113,42,0.1); color: var(--saffron); }
+  .q-btn.del:hover { background: rgba(200,85,85,0.12); color: #c55; }
+  .q-empty {
+    padding: 0.8rem 0.6rem;
+    font-size: 0.78rem;
+    color: var(--muted);
+    text-align: center;
+    font-style: italic;
+  }
+  .lib-footer {
+    display: flex; gap: 0.5rem; padding-top: 0.5rem;
+    border-top: 1px dashed var(--border); margin-top: 0.3rem;
+  }
+
   @media (max-width: 600px) {
     .schedule-grid { grid-template-columns: 1fr; }
     .mood-grid { grid-template-columns: repeat(2, 1fr); }
+    .phase-row { grid-template-columns: 24px 1fr 80px 1fr 26px; font-size: 0.75rem; }
   }
 </style>
 </head>
@@ -617,10 +1155,6 @@
 <header>
   <div class="logo">Store<span>DJ</span></div>
   <div class="header-right">
-    <label class="demo-toggle on" id="demo-toggle-label" title="Play via Spotify embed — no API login needed">
-      <input type="checkbox" id="demo-toggle" checked onchange="toggleDemoMode(this.checked)">
-      <span>🧪 DEMO MODE</span>
-    </label>
     <div class="spotify-badge">
       <div class="dot" id="conn-dot"></div>
       <span id="conn-label">NOT CONNECTED</span>
@@ -671,149 +1205,70 @@
     </div>
   </div>
 
-  <!-- STEP 2: Schedule -->
+  <!-- STEP 2: Schedules (named, multi-phase) -->
   <div class="step">
     <div class="step-label">Step 02</div>
-    <h2>Time-of-day schedule</h2>
+    <h2>Schedules & phases</h2>
     <div class="card">
-      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem;">Assign a playlist or mood to each part of the store day. StoreDJ will auto-switch at these times.</p>
-      <div class="schedule-grid">
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:0.9rem;">Build as many schedules as you need (e.g. <em>Weekday</em>, <em>Weekend</em>, <em>Festival</em>). Each schedule has any number of named phases that run at times you pick.</p>
 
-        <div class="slot morning">
-          <div class="slot-header">
-            <span class="slot-name">☀️ Morning</span>
-            <span class="slot-time">8 AM – 12 PM</span>
-          </div>
-          <select id="sched-morning">
-            <option value="old_hindi">Old Hindi classics</option>
-            <option value="new_bollywood">New Bollywood</option>
-            <option value="mixed">Mixed vibes</option>
-            <option value="mellow">Mellow instrumental</option>
-            <option value="devotional">Devotional / soft</option>
-          </select>
-        </div>
-
-        <div class="slot afternoon">
-          <div class="slot-header">
-            <span class="slot-name">🌤 Afternoon</span>
-            <span class="slot-time">12 PM – 5 PM</span>
-          </div>
-          <select id="sched-afternoon">
-            <option value="new_bollywood" selected>New Bollywood</option>
-            <option value="old_hindi">Old Hindi classics</option>
-            <option value="mixed">Mixed vibes</option>
-            <option value="upbeat">Upbeat party</option>
-            <option value="devotional">Devotional / soft</option>
-          </select>
-        </div>
-
-        <div class="slot evening">
-          <div class="slot-header">
-            <span class="slot-name">🌆 Evening</span>
-            <span class="slot-time">5 PM – 8 PM</span>
-          </div>
-          <select id="sched-evening">
-            <option value="mixed" selected>Mixed vibes</option>
-            <option value="old_hindi">Old Hindi classics</option>
-            <option value="new_bollywood">New Bollywood</option>
-            <option value="upbeat">Upbeat party</option>
-            <option value="mellow">Mellow instrumental</option>
-          </select>
-        </div>
-
-        <div class="slot night">
-          <div class="slot-header">
-            <span class="slot-name">🌙 Closing</span>
-            <span class="slot-time">8 PM – close</span>
-          </div>
-          <select id="sched-night">
-            <option value="old_hindi" selected>Old Hindi classics</option>
-            <option value="mellow">Mellow instrumental</option>
-            <option value="mixed">Mixed vibes</option>
-            <option value="new_bollywood">New Bollywood</option>
-          </select>
-        </div>
-
+      <div class="sched-toolbar">
+        <select id="schedule-picker" onchange="switchSchedule(this.value)"></select>
+        <button class="btn-mini" onclick="createSchedule()">+ New</button>
+        <button class="btn-mini" onclick="renameSchedule()">Rename</button>
+        <button class="btn-mini" onclick="duplicateSchedule()">Duplicate</button>
+        <button class="btn-mini danger" onclick="deleteSchedule()">Delete</button>
       </div>
+
+      <div id="phase-list" class="phase-list"></div>
+      <button class="phase-add" onclick="addPhase()">+ Add phase</button>
+
       <div class="btn-row">
         <button class="btn btn-primary" onclick="saveSchedule()">Save schedule</button>
-        <button class="btn btn-ghost" onclick="startScheduler()">▶ Start auto-scheduler</button>
+        <button class="btn btn-ghost" id="btn-scheduler" onclick="startScheduler()">▶ Start auto-scheduler</button>
       </div>
     </div>
   </div>
 
-  <!-- STEP 3: Play now -->
+  <!-- STEP 3: Moods + search -->
   <div class="step">
     <div class="step-label">Step 03</div>
-    <h2>Play now — pick a mood</h2>
+    <h2>Moods — click one to search playlists or songs</h2>
     <div class="card">
-      <div class="mood-grid">
-        <button class="mood-btn" onclick="playMood('old_hindi', this)">
-          <div class="mood-icon">🎻</div>
-          <div class="mood-label">Old Hindi</div>
-          <div class="mood-sub">Golden era classics</div>
-        </button>
-        <button class="mood-btn" onclick="playMood('new_bollywood', this)">
-          <div class="mood-icon">🎬</div>
-          <div class="mood-label">New Bollywood</div>
-          <div class="mood-sub">2020s hits</div>
-        </button>
-        <button class="mood-btn" onclick="playMood('mixed', this)">
-          <div class="mood-icon">🎶</div>
-          <div class="mood-label">Mixed vibes</div>
-          <div class="mood-sub">Best of both</div>
-        </button>
-        <button class="mood-btn" onclick="playMood('mellow', this)">
-          <div class="mood-icon">🌿</div>
-          <div class="mood-label">Mellow</div>
-          <div class="mood-sub">Calm instrumentals</div>
-        </button>
-        <button class="mood-btn" onclick="playMood('upbeat', this)">
-          <div class="mood-icon">🥁</div>
-          <div class="mood-label">Upbeat</div>
-          <div class="mood-sub">High energy</div>
-        </button>
-        <button class="mood-btn" onclick="playMood('devotional', this)">
-          <div class="mood-icon">🪔</div>
-          <div class="mood-label">Devotional</div>
-          <div class="mood-sub">Bhajans &amp; soft</div>
-        </button>
-      </div>
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:0.85rem;">Tap a mood to open the search panel. Toggle between <strong>Playlists</strong> and <strong>Songs</strong>, then click any result to add it to that mood's queue and play it.</p>
 
-      <!-- Top-5 playlist picker (appears after you click a mood) -->
+      <div class="mood-grid" id="mood-grid"></div>
+
+      <!-- Top-5 picker with Playlists / Songs tabs (appears after you click a mood) -->
       <div id="mood-picker-wrap" class="mood-picker hidden"></div>
 
-      <!-- Playlist search -->
-      <hr class="divider">
-      <label>Or search your Spotify playlists</label>
-      <div class="search-wrap">
-        <input type="text" id="playlist-search" placeholder="Search playlists..." oninput="searchPlaylists(this.value)">
-        <button class="btn btn-ghost" onclick="fetchMyPlaylists()">Browse all</button>
-      </div>
-      <div id="playlist-results"></div>
-
-      <!-- Now playing -->
+      <!-- Now playing — ONE unified panel: slim controls strip + Spotify embed below -->
       <div id="now-playing-wrap" class="hidden" style="margin-top:1rem;">
-        <div class="now-playing">
-          <div class="vinyl spinning" id="vinyl"></div>
-          <div class="np-info">
-            <div class="np-track" id="np-track">—</div>
-            <div class="np-meta" id="np-meta">—</div>
+        <div class="np-panel">
+          <div class="np-strip">
+            <span class="np-badge" id="np-badge">LIVE</span>
+            <span class="np-strip-track" id="np-strip-track">—</span>
+            <div class="np-strip-controls">
+              <button class="np-btn" id="np-shuffle-btn" onclick="toggleShuffle()" title="Shuffle">🔀</button>
+              <button class="np-btn play" id="np-play-btn" onclick="togglePlayPause()" title="Play/Pause">⏸</button>
+              <button class="np-btn" id="np-next-btn" onclick="skipNext()" title="Skip to next track">⏭</button>
+              <a class="np-btn" id="np-open-link" href="#" target="_blank" title="Open in Spotify">↗</a>
+            </div>
           </div>
-          <div class="np-badge" id="np-badge">LIVE</div>
+          <!-- Unified media area: custom tracklist for playlists; empty for single tracks (Spotify plays on the user's Connect device). -->
+          <div id="np-media" class="hidden"></div>
         </div>
-        <div id="embed-wrap" class="embed-wrap hidden"></div>
       </div>
+    </div>
+  </div>
 
-      <!-- Per-mood playlist customisation -->
-      <details class="mood-config" open>
-        <summary>⚙ Customize playlists — click 🔍 Find to pick the right one on Spotify</summary>
-        <p style="font-size:0.72rem;color:var(--muted);margin:0.5rem 0;line-height:1.5;">
-          Paste a full Spotify URL like <code>https://open.spotify.com/playlist/37i9dQZF1DX0XUfTFmNBRM</code>
-          or just the 22-char playlist ID. Saved to this browser.
-        </p>
-        <div class="mood-config-grid" id="mood-config-grid"></div>
-      </details>
+  <!-- STEP 4: Mood library (queue editor) -->
+  <div class="step">
+    <div class="step-label">Step 04</div>
+    <h2>Mood library — reorder, add, remove</h2>
+    <div class="card">
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:0.9rem;">Every mood has a queue. The top item plays first when the scheduler fires. Reorder with ▲ ▼, remove with ✕, or tap <strong>+ Add</strong> to search more content for that mood.</p>
+      <div id="library-grid" class="library-grid"></div>
     </div>
   </div>
 
@@ -837,7 +1292,10 @@
 </div>
 
 <script>
-// ── STATE ──
+// ── STATE (v2) ──
+// Schedules: array of named schedules, each with an ordered list of phases.
+// Moods: dict of moods (built-in + custom). Each mood has a queue of items (playlist or track).
+// Queue items: { type: 'playlist'|'track', id, uri, name, image, meta }
 const state = {
   accessToken: null,
   refreshToken: null,
@@ -846,21 +1304,55 @@ const state = {
   connected: false,
   schedulerRunning: false,
   schedulerInterval: null,
-  demoMode: true,
-  pickerCache: {},   // { mood: [playlists...] } — avoid re-searching
-  playlists: [],
-  // spotifyId = the ID after /playlist/ in a Spotify URL.
-  // Only New Bollywood has a confirmed default (Bollywood Butter). For the other moods,
-  // clicking the tile opens Spotify's playlist search so you can pick the right one.
-  moodMap: {
-    old_hindi:    { name: 'Old Hindi Classics',   query: 'old hindi classics kishore kumar lata mangeshkar mohammed rafi 1960s 1970s bollywood retro', spotifyId: '' },
-    new_bollywood:{ name: 'New Bollywood',         query: 'new bollywood 2023 2024 arijit singh jubin nautiyal hits',                                   spotifyId: '37i9dQZF1DX0XUfTFmNBRM' },
-    mixed:        { name: 'Mixed Vibes',           query: 'bollywood hindi hits mix best',                                                               spotifyId: '' },
-    mellow:       { name: 'Mellow Instrumental',   query: 'hindi instrumental chill bollywood acoustic soft',                                           spotifyId: '' },
-    upbeat:       { name: 'Upbeat Bollywood',      query: 'upbeat bollywood dance party punjabi hits',                                                   spotifyId: '' },
-    devotional:   { name: 'Devotional Bhajans',    query: 'hindi bhajan devotional krishna shiva aarti',                                                 spotifyId: '' },
-  }
+  pickerCache: {},   // { mood: { playlist: [...], track: [...] } }
+  pickerTab: 'playlist',
+  pickerMood: null,
+  libraryExpanded: {}, // { moodKey: true/false }
+  schedules: [],
+  activeScheduleId: null,
+  moods: {},         // populated from defaults + localStorage
+  currentItem: null, // what's live right now
+  isPaused: false,   // for the play/pause button
+  shuffle: true,     // auto-shuffle playlists on play (toggleable)
+  nowPlayingPoll: null, // setInterval id for live currently-playing poll
+  lastTrackId: null,    // last track id we rendered, to avoid pointless DOM thrash
+  // Adaptive lockouts: when the user clicks a button we set state optimistically
+  // and lock it for up to N seconds. The poll RELEASES the lock as soon as Spotify
+  // reports the matching state (confirmation), OR when the timeout expires (so a
+  // silently-rejected click eventually reverts and the user sees the truth — no
+  // permanent mismatch with Spotify).
+  shuffleLockUntil: 0,
+  shuffleIntent: null,  // what we asked shuffle to be (true/false), for confirmation match
+  playLockUntil: 0,
+  playIntent: null,     // what we asked is_playing to be
+  // Device tracking: synced from /me/player every poll so commands always target
+  // wherever Spotify is currently playing — no split between display and control.
+  activeDeviceId: null
 };
+
+const DEFAULT_MOODS = {
+  old_hindi:    { name: 'Old Hindi Classics',   emoji: '🎻', sub: 'Golden era',           query: 'old hindi classics kishore kumar lata mangeshkar mohammed rafi 1960s 1970s bollywood retro' },
+  new_bollywood:{ name: 'New Bollywood',         emoji: '🎬', sub: '2020s hits',           query: 'new bollywood 2023 2024 arijit singh jubin nautiyal hits' },
+  mixed:        { name: 'Mixed Vibes',           emoji: '🎶', sub: 'Best of both',         query: 'bollywood hindi hits mix best' },
+  mellow:       { name: 'Mellow',                emoji: '🌿', sub: 'Calm instrumentals',   query: 'hindi instrumental chill bollywood acoustic soft' },
+  upbeat:       { name: 'Upbeat',                emoji: '🥁', sub: 'High energy',          query: 'upbeat bollywood dance party punjabi hits' },
+  devotional:   { name: 'Devotional',            emoji: '🪔', sub: 'Bhajans & soft',       query: 'hindi bhajan devotional krishna shiva aarti' },
+};
+
+function uid(prefix='id') { return prefix + '-' + Math.random().toString(36).slice(2, 9); }
+
+function defaultSchedule() {
+  return {
+    id: uid('sch'),
+    name: 'Default day',
+    phases: [
+      { id: uid('ph'), name: 'Morning',   start: '07:00', mood: 'devotional' },
+      { id: uid('ph'), name: 'Midday',    start: '10:30', mood: 'new_bollywood' },
+      { id: uid('ph'), name: 'Evening',   start: '17:00', mood: 'mixed' },
+      { id: uid('ph'), name: 'Closing',   start: '20:00', mood: 'old_hindi' },
+    ],
+  };
+}
 
 function extractSpotifyId(input) {
   if (!input) return null;
@@ -874,22 +1366,45 @@ function updateClock() {
   const now = new Date();
   document.getElementById('status-time').textContent =
     now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-  updateSlotLabel(now.getHours());
+  updateSlotLabel(now);
 }
 setInterval(updateClock, 1000);
 updateClock();
 
-function getSlot(hour) {
-  if (hour >= 8  && hour < 12) return 'morning';
-  if (hour >= 12 && hour < 17) return 'afternoon';
-  if (hour >= 17 && hour < 20) return 'evening';
-  return 'night';
+function hhmmToMinutes(hhmm) {
+  if (!hhmm) return 0;
+  const [h, m] = hhmm.split(':').map(Number);
+  return (h || 0) * 60 + (m || 0);
 }
 
-function updateSlotLabel(hour) {
-  const slot = getSlot(hour);
-  const labels = { morning:'☀️ Morning', afternoon:'🌤 Afternoon', evening:'🌆 Evening', night:'🌙 Closing' };
-  document.getElementById('status-slot').textContent = labels[slot];
+function minutesToAmPm(total) {
+  total = ((total % 1440) + 1440) % 1440;
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = ((h + 11) % 12) + 1;
+  return `${h12}:${m.toString().padStart(2, '0')} ${ampm}`;
+}
+
+// Returns the currently active phase object from the active schedule based on wall-clock time.
+// Phases are sorted by start time; the current phase is the latest phase whose start <= now.
+// If now is before the earliest phase, the phase that wraps around (i.e. the last phase of the day) wins.
+function getActivePhase(date = new Date()) {
+  const sch = getActiveSchedule();
+  if (!sch || !sch.phases.length) return null;
+  const t = date.getHours() * 60 + date.getMinutes();
+  const sorted = [...sch.phases].sort((a, b) => hhmmToMinutes(a.start) - hhmmToMinutes(b.start));
+  let current = sorted[sorted.length - 1]; // wrap-around default
+  for (const p of sorted) {
+    if (t >= hhmmToMinutes(p.start)) current = p;
+  }
+  return current;
+}
+
+function updateSlotLabel(date = new Date()) {
+  const phase = getActivePhase(date);
+  const el = document.getElementById('status-slot');
+  if (el) el.textContent = phase ? phase.name : '—';
 }
 
 // ── LOG ──
@@ -940,6 +1455,7 @@ async function connectSpotify() {
   sessionStorage.setItem('storedj_redirect_uri', redirectUri);
 
   const scopes = [
+    'user-read-private',
     'playlist-read-private',
     'playlist-modify-public',
     'playlist-modify-private',
@@ -1007,7 +1523,7 @@ function setConnected(val) {
   state.connected = val;
   document.getElementById('conn-dot').className = 'dot' + (val ? ' connected' : '');
   document.getElementById('conn-label').textContent = val ? 'CONNECTED' : 'NOT CONNECTED';
-  if (val) log('✓ Spotify connected — uncheck 🧪 Demo Mode (top right) to play on your Spotify device', 'ok');
+  if (val) log('✓ Spotify connected — pick a mood to play on your Spotify device', 'ok');
 }
 
 // ── DEVICE HELPERS ──
@@ -1071,10 +1587,40 @@ async function spotifyPut(url, body={}) {
   return r;
 }
 
-// ── PLAY MOOD (always shows top-5 picker, user chooses, we play) ──
+// Build a Spotify Web API URL with our sticky device_id appended. Use for ALL
+// playback commands (play/pause/shuffle/next/etc.) so they target the device
+// we chose at first play instead of jumping to whatever is "active" right now.
+function deviceUrl(base, extraQuery = '') {
+  const params = [];
+  if (state.activeDeviceId) params.push('device_id=' + encodeURIComponent(state.activeDeviceId));
+  if (extraQuery) params.push(extraQuery.replace(/^[?&]/, ''));
+  return base + (params.length ? '?' + params.join('&') : '');
+}
+
+// If a playback command returned 404 NO_DEVICE, our chosen device is gone.
+// Clear it, list devices again, lock onto a new one, transfer to it.
+async function rebindActiveDevice() {
+  state.activeDeviceId = null;
+  try {
+    const devs = await listDevices();
+    const next = devs.find(d => d.is_active) || devs.find(d => !d.is_restricted) || devs[0];
+    if (!next) return null;
+    if (!next.is_active) {
+      await transferPlaybackTo(next.id);
+      await new Promise(r => setTimeout(r, 600));
+    }
+    state.activeDeviceId = next.id;
+    log(`Rebound to device "${next.name}"`, 'info');
+    return next;
+  } catch { return null; }
+}
+
+// ── PLAY MOOD — opens the picker (Playlists | Songs) for that mood ──
 async function playMood(mood, btn) {
   document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
+  state.pickerMood = mood;
+  state.pickerTab = 'playlist';
   return showMoodPicker(mood);
 }
 
@@ -1109,132 +1655,459 @@ async function getSearchToken() {
   return state.accessToken || await getAppToken();
 }
 
-async function searchPlaylistsForMood(mood, limit = 5) {
-  const m = state.moodMap[mood];
+// Search — type is 'playlist' or 'track'. Asks for 20 so we can reliably fill the top 5 even
+// when Spotify returns some null/stale results.
+async function searchSpotify(query, type, limit = 5) {
   const token = await getSearchToken();
   if (!token) return { token: null, items: [] };
+  const cleanQuery = (query || '').trim();
+  if (!cleanQuery) {
+    log(`Search error: empty query`, 'err');
+    return { token, items: [] };
+  }
+  const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(cleanQuery)}&type=${type}&limit=10`;
   try {
-    const res = await fetch(
-      `https://api.spotify.com/v1/search?q=${encodeURIComponent(m.query)}&type=playlist&limit=${limit}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    if (!res.ok) { log(`Search HTTP ${res.status}`, 'err'); return { token, items: [] }; }
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) {
+      let detail = '';
+      try { const j = await res.json(); detail = j.error?.message || JSON.stringify(j).slice(0, 140); } catch {}
+      if (res.status === 400) {
+        log(`Search failed (400): ${detail || 'bad query'} — query was "${cleanQuery}". Try shorter keywords or connect your Spotify account for wider access.`, 'err');
+      } else if (res.status === 401) {
+        // Token expired — drop the cached app token and let caller retry
+        state.appToken = null;
+        state.appTokenExpires = 0;
+        log(`Search token expired — will refresh on next click.`, 'err');
+      } else {
+        log(`Search HTTP ${res.status}${detail ? ': ' + detail : ''}`, 'err');
+      }
+      return { token, items: [] };
+    }
     const data = await res.json();
-    return { token, items: (data.playlists?.items || []).filter(p => p) };
+    const raw = type === 'playlist' ? (data.playlists?.items || []) : (data.tracks?.items || []);
+    const cleaned = raw.filter(p => p && p.id && p.name);
+    return { token, items: cleaned.slice(0, limit) };
   } catch(e) { log(`Search error: ${e.message}`, 'err'); return { token: null, items: [] }; }
 }
 
-// ── MOOD PICKER UI ──
+// ── MOOD PICKER UI (tabbed: playlists / songs) ──
 async function showMoodPicker(mood) {
-  const m = state.moodMap[mood];
-  log(`Finding top 5 "${m.name}" playlists…`, 'info');
-  const { token, items } = await searchPlaylistsForMood(mood, 5);
-  if (!token) {
-    log(`⚠ Paste Client ID + Client Secret to enable the in-app picker.`, 'err');
-    return;
-  }
-  if (!items.length) {
-    log(`No playlists found for "${m.name}"`, 'err');
-    return;
-  }
-  state.pickerCache[mood] = items;
-  renderMoodPicker(mood, m.name, items);
+  const m = state.moods[mood];
+  if (!m) { log(`Unknown mood "${mood}"`, 'err'); return; }
+  // Render shell immediately so user sees the tabs even while the first fetch is in flight
+  renderMoodPickerShell(mood);
+  await loadPickerTab(mood, state.pickerTab);
 }
 
-function renderMoodPicker(mood, moodName, items) {
+function renderMoodPickerShell(mood) {
+  const m = state.moods[mood];
   const wrap = document.getElementById('mood-picker-wrap');
   wrap.classList.remove('hidden');
-  const currentId = state.moodMap[mood].spotifyId;
   wrap.innerHTML = `
     <div class="picker-header">
-      <span>Top 5 for <strong>${escHtml(moodName)}</strong> — click one to play</span>
+      <span>${m.emoji} <strong>${escHtml(m.name)}</strong> — click a result to add to queue and play</span>
       <button class="picker-close" onclick="closeMoodPicker()" title="Close">✕</button>
     </div>
-    <div class="picker-grid">
-      ${items.map((p, i) => {
-        const isCurrent = p.id === currentId;
-        const img = p.images?.[0]?.url;
-        const owner = escHtml(p.owner?.display_name || 'Spotify');
-        const total = p.tracks?.total ?? '?';
-        return `
-          <div class="picker-card${isCurrent ? ' current' : ''}" onclick="pickMoodPlaylist('${mood}', '${p.id}')">
-            <div class="picker-num">${i + 1}</div>
-            ${img ? `<img src="${img}" alt="">` : '<div class="picker-img-ph"></div>'}
-            <div class="picker-info">
-              <div class="picker-name">${escHtml(p.name)}</div>
-              <div class="picker-meta">${total} tracks · ${owner}${isCurrent ? ' · CURRENT' : ''}</div>
-            </div>
-            <div class="picker-play">▶</div>
-          </div>
-        `;
-      }).join('')}
+    <div class="picker-tabs">
+      <button class="picker-tab ${state.pickerTab === 'playlist' ? 'active' : ''}" onclick="setPickerTab('playlist')">🎵 Playlists</button>
+      <button class="picker-tab ${state.pickerTab === 'track' ? 'active' : ''}" onclick="setPickerTab('track')">♪ Songs</button>
+    </div>
+    <div class="picker-grid" id="picker-grid">
+      <div style="padding:1rem;font-size:0.78rem;color:var(--muted);text-align:center;">Searching…</div>
     </div>
   `;
   wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-async function pickMoodPlaylist(mood, playlistId) {
-  const cached = (state.pickerCache[mood] || []).find(p => p.id === playlistId);
-  const name = cached?.name || 'Playlist';
-  const total = cached?.tracks?.total ?? '?';
+async function setPickerTab(tab) {
+  if (state.pickerTab === tab) return;
+  state.pickerTab = tab;
+  // Update the tab buttons' active state
+  document.querySelectorAll('.picker-tab').forEach(el => el.classList.remove('active'));
+  const i = tab === 'playlist' ? 0 : 1;
+  document.querySelectorAll('.picker-tab')[i]?.classList.add('active');
+  await loadPickerTab(state.pickerMood, tab);
+}
 
-  // Save as default for this mood
-  state.moodMap[mood].spotifyId = playlistId;
-  const saved = JSON.parse(localStorage.getItem('storedj_mood_urls') || '{}');
-  saved[mood] = playlistId;
-  localStorage.setItem('storedj_mood_urls', JSON.stringify(saved));
-  const input = document.getElementById('mood-url-' + mood);
-  if (input) input.value = playlistId;
+async function loadPickerTab(mood, type) {
+  const m = state.moods[mood];
+  const cacheKey = `${mood}:${type}`;
+  let items = state.pickerCache[cacheKey];
+  if (!items) {
+    const { token, items: fetched } = await searchSpotify(m.query, type, 5);
+    if (!token) {
+      renderPickerEmpty('Paste Client ID + Client Secret in Step 01 to enable search.');
+      return;
+    }
+    items = fetched;
+    state.pickerCache[cacheKey] = items;
+  }
+  if (!items.length) {
+    renderPickerEmpty(`No ${type === 'playlist' ? 'playlists' : 'songs'} found for "${m.name}".`);
+    return;
+  }
+  renderPickerResults(mood, type, items);
+}
 
-  log(`✓ Selected "${name}" for ${state.moodMap[mood].name}`, 'ok');
-  closeMoodPicker();
+function renderPickerEmpty(msg) {
+  const grid = document.getElementById('picker-grid');
+  if (!grid) return;
+  grid.innerHTML = `<div style="padding:1rem;font-size:0.78rem;color:var(--muted);text-align:center;">${escHtml(msg)}</div>`;
+}
 
-  // Play it — embed in demo, API in live
-  if (state.demoMode) {
-    showNowPlayingEmbed(name, mood, playlistId);
-  } else {
-    await playOnSpotify(playlistId, name, mood, total);
+// Helper: format a playlist's meta line in plain text. Returns the count when known,
+// else falls back to just the owner — never the broken-looking "? tracks". Callers that
+// inject the result into innerHTML should pass it through escHtml first.
+function formatPlaylistMeta(item) {
+  const owner = item.owner?.display_name || 'Spotify';
+  const total = item.tracks?.total;
+  return (typeof total === 'number' && total > 0)
+    ? `${total} tracks · ${owner}`
+    : owner;
+}
+
+// Background: fetch /v1/playlists/{id} to get the real track count for a playlist whose
+// search-result didn't include one. Mutates `item` in place (updates the picker cache),
+// patches picker cards, and also fixes any matching mood-queue items in the library so
+// their saved meta shows the count too. Quietly no-ops if the API rejects.
+async function enrichPlaylistTrackCount(item) {
+  if (!state.accessToken) return;
+  if (typeof item.tracks?.total === 'number') return;
+  try {
+    const r = await fetch(`https://api.spotify.com/v1/playlists/${item.id}?fields=tracks(total)`, {
+      headers: { Authorization: `Bearer ${state.accessToken}` }
+    });
+    if (!r.ok) return;
+    const data = await r.json();
+    const total = data.tracks?.total;
+    if (typeof total !== 'number') return;
+    item.tracks = item.tracks || {};
+    item.tracks.total = total;
+    const newMeta = formatPlaylistMeta(item);
+
+    // Patch picker cards on the page.
+    document.querySelectorAll(`.picker-card[data-playlist-id="${item.id}"] .picker-meta`).forEach(el => {
+      const inQueueSuffix = el.textContent.includes('IN QUEUE') ? ' · IN QUEUE' : '';
+      el.textContent = newMeta + inQueueSuffix;
+    });
+
+    // Update any mood queue items that reference this playlist, then re-render the library.
+    let moodsChanged = false;
+    Object.values(state.moods || {}).forEach(mood => {
+      (mood.queue || []).forEach(q => {
+        if (q.type === 'playlist' && q.id === item.id && q.meta !== newMeta) {
+          q.meta = newMeta;
+          moodsChanged = true;
+        }
+      });
+    });
+    if (moodsChanged) {
+      try { persistMoods(); } catch {}
+      try { renderLibrary(); } catch {}
+    }
+  } catch {}
+}
+
+// ── CUSTOM TRACKLIST (live mode) ──
+// In live mode the Spotify embed iframe is useless as a "currently playing"
+// indicator: it's a sandboxed cross-origin component with its own playback state
+// totally independent of the user's Spotify Connect device. Its highlighted track
+// is whatever IT thinks is playing — which in live mode is nothing — so the
+// highlight drifts and confuses the user. Solution: build our own tracklist from
+// the same /v1/playlists/{id} parent endpoint we already use, and highlight the
+// current row from /me/player so the strip + tracklist + Spotify all agree.
+async function fetchPlaylistTracks(playlistId) {
+  if (!state.accessToken) return null;
+  // Parent endpoint with `fields` is allowed in dev mode; /playlists/{id}/tracks
+  // is the blocked one. This returns the first ~100 items per playlist.
+  const fields = 'tracks.items(track(id,name,uri,duration_ms,artists(name)))';
+  try {
+    const r = await fetch(
+      `https://api.spotify.com/v1/playlists/${playlistId}?fields=${encodeURIComponent(fields)}`,
+      { headers: { Authorization: `Bearer ${state.accessToken}` } }
+    );
+    if (!r.ok) return null;
+    const data = await r.json();
+    const tracks = (data.tracks?.items || [])
+      .map(it => it.track)
+      .filter(t => t && t.id);
+    return tracks.length ? tracks : null;
+  } catch { return null; }
+}
+
+function fmtDuration(ms) {
+  if (!ms) return '';
+  const s = Math.round(ms / 1000);
+  return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
+}
+
+function renderCustomTracklist(playlistItem, tracks) {
+  const media = document.getElementById('np-media');
+  if (!media) return;
+  media.classList.remove('hidden');
+  const rows = tracks.map((t, i) => `
+    <div class="np-track-row" data-track-id="${t.id}">
+      <span class="np-track-num">${i + 1}</span>
+      <div class="np-track-info">
+        <div class="np-track-title">${escHtml(t.name)}</div>
+        <div class="np-track-artists">${escHtml((t.artists || []).map(a => a.name).join(', '))}</div>
+      </div>
+      <span class="np-track-dur">${fmtDuration(t.duration_ms)}</span>
+    </div>
+  `).join('');
+  media.innerHTML = `
+    <div class="np-tracklist">
+      <div class="np-tracklist-header">
+        <span class="np-tracklist-title">${escHtml(playlistItem.name)}</span>
+        <span class="np-tracklist-count">${tracks.length} ${tracks.length === 1 ? 'track' : 'tracks'}</span>
+      </div>
+      <div class="np-tracklist-body" id="np-tracklist-body">${rows}</div>
+    </div>
+  `;
+}
+
+// Highlight the currently playing track in our custom list and auto-scroll to
+// it if it's off-screen. Called from pollCurrentlyPlayingTick on every tick.
+// No-op if the custom list isn't mounted (e.g. single-track item).
+function highlightCurrentTrack(trackId) {
+  const body = document.getElementById('np-tracklist-body');
+  if (!body || !trackId) return;
+  let activeRow = null;
+  body.querySelectorAll('.np-track-row').forEach(row => {
+    const isActive = row.dataset.trackId === trackId;
+    row.classList.toggle('active', isActive);
+    if (isActive) activeRow = row;
+  });
+  if (activeRow) {
+    // Only scroll if the row isn't already visible (avoid jittery scroll on every tick).
+    const rowRect = activeRow.getBoundingClientRect();
+    const bodyRect = body.getBoundingClientRect();
+    const fullyVisible = rowRect.top >= bodyRect.top && rowRect.bottom <= bodyRect.bottom;
+    if (!fullyVisible) {
+      activeRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   }
 }
 
-async function playOnSpotify(playlistId, name, mood, total) {
+function renderPickerResults(mood, type, items) {
+  const grid = document.getElementById('picker-grid');
+  if (!grid) return;
+  const queue = state.moods[mood].queue || [];
+  grid.innerHTML = items.map((it, i) => {
+    const img = type === 'playlist' ? it.images?.[0]?.url : it.album?.images?.[0]?.url;
+    const inQueue = queue.some(q => q.id === it.id);
+    const meta = type === 'playlist'
+      ? escHtml(formatPlaylistMeta(it))
+      : `${escHtml((it.artists || []).map(a => a.name).join(', ') || 'Artist')} · ${escHtml(it.album?.name || '')}`;
+    const peekBtn = type === 'playlist'
+      ? `<button class="picker-icon-btn" onclick="event.stopPropagation(); togglePeek('${mood}', '${it.id}')" title="Preview tracks">👁</button>`
+      : '';
+    const addTitle = inQueue ? 'Already in mood queue' : 'Add to mood queue (does not play)';
+    return `
+      <div class="picker-card${inQueue ? ' current' : ''}" data-playlist-id="${it.id}">
+        <div class="picker-num">${i + 1}</div>
+        ${img ? `<img src="${img}" alt="" onclick="playFromPicker('${mood}', '${type}', '${it.id}')" style="cursor:pointer;">` : `<div class="picker-img-ph" onclick="playFromPicker('${mood}', '${type}', '${it.id}')" style="cursor:pointer;"></div>`}
+        <div class="picker-info" onclick="playFromPicker('${mood}', '${type}', '${it.id}')" style="cursor:pointer;">
+          <div class="picker-name">${escHtml(it.name)}</div>
+          <div class="picker-meta">${meta}${inQueue ? ' · IN QUEUE' : ''}</div>
+        </div>
+        <div class="picker-actions">
+          ${peekBtn}
+          <button class="picker-icon-btn${inQueue ? ' disabled' : ''}" onclick="event.stopPropagation(); addToMood('${mood}', '${type}', '${it.id}')" title="${addTitle}" ${inQueue ? 'disabled' : ''}>＋</button>
+          <button class="picker-icon-btn play" onclick="event.stopPropagation(); playFromPicker('${mood}', '${type}', '${it.id}')" title="Play now (without adding)">▶</button>
+        </div>
+        <div class="peek-panel hidden" id="peek-${it.id}"></div>
+      </div>
+    `;
+  }).join('');
+
+  // After rendering, kick off background fetches to fill in any missing track counts.
+  // Each fetch updates the in-memory item and patches the DOM when it returns.
+  if (type === 'playlist' && state.accessToken) {
+    items.forEach(it => {
+      if (typeof it.tracks?.total !== 'number') enrichPlaylistTrackCount(it);
+    });
+  }
+}
+
+// ── PEEK: expand a playlist inline to preview its tracks ──
+// Tries the tracks API first (richer UI). If Spotify blocks it (403, common for editorial
+// playlists + Dev Mode apps), falls back to the Spotify embed iframe which works universally.
+async function togglePeek(mood, playlistId) {
+  const panel = document.getElementById(`peek-${playlistId}`);
+  if (!panel) return;
+  if (!panel.classList.contains('hidden')) {
+    panel.classList.add('hidden');
+    return;
+  }
+  panel.classList.remove('hidden');
+  panel.innerHTML = `<div class="peek-loading">Loading tracks…</div>`;
+  const token = await getSearchToken();
+  if (token) {
+    try {
+      const res = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=50&fields=items(track(id,name,duration_ms,artists(name),album(name)))`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const tracks = (data.items || []).map(i => i.track).filter(t => t && t.id);
+        if (tracks.length) {
+          const rows = tracks.map((t, i) => {
+            const artists = (t.artists || []).map(a => a.name).join(', ');
+            const mins = Math.floor((t.duration_ms || 0) / 60000);
+            const secs = String(Math.floor(((t.duration_ms || 0) % 60000) / 1000)).padStart(2, '0');
+            return `
+              <div class="peek-track">
+                <div class="peek-num">${i + 1}</div>
+                <div>
+                  <div class="peek-name">${escHtml(t.name)}</div>
+                  <div class="peek-artist">${escHtml(artists)}</div>
+                </div>
+                <div class="peek-dur">${mins}:${secs}</div>
+              </div>`;
+          }).join('');
+          panel.innerHTML = `
+            <div class="peek-head"><span>${tracks.length} TRACKS</span><span>Click ▶ above to add &amp; play</span></div>
+            ${rows}`;
+          return;
+        }
+      }
+      // fall through to embed fallback below
+    } catch(e) { /* fall through */ }
+  }
+  // Fallback: Spotify embed iframe — always works, shows tracks + lets you preview audio.
+  panel.innerHTML = `
+    <div class="peek-head"><span>PREVIEW</span><span>Scroll &amp; play inside · ▶ above to add</span></div>
+    <iframe
+      src="https://open.spotify.com/embed/playlist/${playlistId}?utm_source=generator"
+      style="width:100%;height:360px;border:0;border-radius:8px;"
+      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+      loading="lazy"></iframe>`;
+  panel.style.maxHeight = '420px';
+}
+
+// Build a queue-ready item from a cached picker result.
+function _buildItemFromPicker(mood, type, itemId) {
+  const cacheKey = `${mood}:${type}`;
+  const cached = (state.pickerCache[cacheKey] || []).find(p => p.id === itemId);
+  if (!cached) return null;
+  const img = type === 'playlist' ? cached.images?.[0]?.url : cached.album?.images?.[0]?.url;
+  return {
+    type,
+    id: itemId,
+    uri: cached.uri || (type === 'playlist' ? `spotify:playlist:${itemId}` : `spotify:track:${itemId}`),
+    name: cached.name,
+    image: img || '',
+    meta: type === 'playlist'
+      ? formatPlaylistMeta(cached)
+      : `${(cached.artists || []).map(a => a.name).join(', ')}`,
+  };
+}
+
+// ＋ Add button — save to this mood's queue. Does NOT play.
+async function addToMood(mood, type, itemId) {
+  const item = _buildItemFromPicker(mood, type, itemId);
+  if (!item) return;
+  const mm = state.moods[mood];
+  if (mm.queue.some(q => q.id === itemId)) {
+    log(`"${item.name}" is already in ${mm.name} queue`, 'info');
+    return;
+  }
+  mm.queue.push(item);
+  persistMoods();
+  renderLibrary();
+  // Re-render picker so the card flips to "IN QUEUE" state and the + button disables.
+  if (state.pickerMood === mood) {
+    const items = state.pickerCache[`${mood}:${type}`];
+    if (items) renderPickerResults(mood, type, items);
+  }
+  log(`+ Added "${item.name}" to ${mm.name} queue`, 'ok');
+}
+
+// ▶ Play button — play immediately. Does NOT add to queue.
+async function playFromPicker(mood, type, itemId) {
+  const item = _buildItemFromPicker(mood, type, itemId);
+  if (!item) return;
+  closeMoodPicker();
+  await playQueueItem(item);
+}
+
+// Plays a queue item (either 'playlist' or 'track'). Device-first ordering:
+//   1) make sure we have an active device (transfer if needed)
+//   2) set shuffle on that device — BEFORE play, so the FIRST track is shuffled too
+//   3) play with device_id explicit, no offset (let shuffle pick the starting track)
+async function playQueueItem(item) {
+  if (!item) return;
   if (!state.accessToken) {
     log('⚠ Not connected. Click "Connect to Spotify" in Step 01 first.', 'err');
     return;
   }
 
-  let res = await spotifyPut('https://api.spotify.com/v1/me/player/play', {
-    context_uri: `spotify:playlist:${playlistId}`,
-    offset: { position: 0 },
-  });
+  // Step 1: pick the device. Sticky priority:
+  //   1. The device we chose previously (state.activeDeviceId) — keeps Store-DJ
+  //      commanding the SAME device across shuffle/play/pause/skip, so opening
+  //      a Spotify web player in another tab doesn't steal control.
+  //   2. The currently active device per Spotify Connect.
+  //   3. The first non-restricted device.
+  // After picking, transfer playback to it explicitly so it's the focused device.
+  const devs = await listDevices();
+  let active = (state.activeDeviceId && devs.find(d => d.id === state.activeDeviceId))
+            || devs.find(d => d.is_active)
+            || devs.find(d => !d.is_restricted)
+            || devs[0];
+  if (active && !active.is_active) {
+    log(`Transferring playback to "${active.name}"…`, 'info');
+    await transferPlaybackTo(active.id);
+    await new Promise(r => setTimeout(r, 800));
+  }
+  if (!active) {
+    log('No Spotify devices found. Open Spotify on a phone/iPad/desktop — opening web player.', 'err');
+    window.open('https://open.spotify.com/', '_blank', 'noopener');
+    return;
+  }
+  // Lock this device in. Every subsequent command will target it explicitly.
+  state.activeDeviceId = active.id;
 
-  // 404 = no active device → try transferring to the first available device and retrying
-  if (res.status === 404) {
-    const devices = await listDevices();
-    if (devices.length) {
-      const target = devices.find(d => !d.is_restricted) || devices[0];
-      log(`No active device — transferring to "${target.name}"…`, 'info');
-      await transferPlaybackTo(target.id);
-      await new Promise(r => setTimeout(r, 600)); // give Spotify a moment
-      res = await spotifyPut('https://api.spotify.com/v1/me/player/play', {
-        context_uri: `spotify:playlist:${playlistId}`,
-        offset: { position: 0 },
+  // Step 2: for playlists, set shuffle FIRST so the very first track is also shuffled.
+  // (If we set shuffle after play, Spotify already started at position 0 and only
+  // the NEXT track would be random — which is why "shuffle didn't shuffle" before.)
+  if (item.type === 'playlist') {
+    try {
+      const sr = await fetch(deviceUrl('https://api.spotify.com/v1/me/player/shuffle', `state=${state.shuffle}`), {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${state.accessToken}` }
       });
-    }
+      if (!sr.ok && sr.status !== 404) {
+        // 404 here is fine — playback hasn't started so device may not be "ready" yet.
+        log(`Shuffle pre-set returned HTTP ${sr.status}`, 'info');
+      }
+    } catch {}
   }
 
-  if (res.status === 204) {
-    log(`✓ Playing "${name}" on Spotify`, 'ok');
-    showNowPlaying(name, `${mood.replace('_',' ')} · ${total} tracks`);
-  } else if (res.status === 404) {
-    log('No Spotify devices found. Open Spotify on your phone/iPad, or go to open.spotify.com — opening it now.', 'err');
-    window.open('https://open.spotify.com/', '_blank', 'noopener');
+  // Step 3: play, targeting our locked device explicitly.
+  // For playlists: omit offset so Spotify uses the shuffle state we just set to pick the first track.
+  // For single tracks: send uris[] (offset doesn't apply).
+  const body = item.type === 'playlist'
+    ? { context_uri: item.uri }
+    : { uris: [item.uri] };
+  const res = await spotifyPut(deviceUrl('https://api.spotify.com/v1/me/player/play'), body);
+
+  if (res.ok || res.status === 204) {
+    const tag = item.type === 'playlist' ? ` (Shuffle ${state.shuffle ? 'ON' : 'OFF'})` : '';
+    log(`✓ Playing "${item.name}" on "${active.name}"${tag}`, 'ok');
+    showNowPlaying(item);
+    // Kick a poll after Spotify has had ~1.2s to start playback so the strip
+    // jumps from "Playlist: …" to "Now: <track>" without waiting for the
+    // 3-second interval.
+    setTimeout(() => { try { pollCurrentlyPlayingTick(); } catch {} }, 1200);
   } else if (res.status === 401) {
     log('Token expired — click "Connect to Spotify" again.', 'err');
   } else if (res.status === 403) {
     let msg = 'Premium required for API playback';
     try { const err = await res.json(); if (err.error?.message) msg = err.error.message; } catch {}
     log(`Spotify rejected: ${msg}`, 'err');
+  } else if (res.status === 404) {
+    log('Device not ready. Open Spotify on a phone/iPad/desktop and try again.', 'err');
   } else {
     log(`Play returned HTTP ${res.status}`, 'err');
   }
@@ -1248,268 +2121,1041 @@ function closeMoodPicker() {
 }
 
 // ── SHOW NOW PLAYING ──
-function showNowPlaying(track, meta) {
+// Slim strip: just badge + a one-line "Now: <track or playlist>" + controls.
+// All the rich visual (art, tracklist, etc.) lives in the embed below.
+function renderNowPlayingCard(item) {
   document.getElementById('now-playing-wrap').classList.remove('hidden');
-  document.getElementById('np-track').textContent = track;
-  document.getElementById('np-meta').textContent = meta;
-  document.getElementById('embed-wrap').classList.add('hidden');
+  state.currentItem = item;
+  state.isPaused = false;
+
+  const stripTrack = document.getElementById('np-strip-track');
+  if (stripTrack) {
+    const prefix = item.type === 'playlist' ? 'Playlist' : 'Song';
+    stripTrack.textContent = `${prefix}: ${item.name}${item.meta ? ' · ' + item.meta : ''}`;
+  }
+
+  // Open-in-Spotify link starts at the playlist/song; live poll may swap to current track.
+  const openLink = document.getElementById('np-open-link');
+  if (openLink) openLink.href = `https://open.spotify.com/${item.type}/${item.id}`;
+
+  // We render our OWN tracklist (no Spotify embed for playlists), so the strip is
+  // the only place with play/skip — show those controls.
+  const playBtn = document.getElementById('np-play-btn');
+  if (playBtn) {
+    playBtn.textContent = '⏸';
+    playBtn.style.display = '';
+  }
+  const nextBtn = document.getElementById('np-next-btn');
+  if (nextBtn) nextBtn.style.display = '';
+
+  // Shuffle: always visible — applies to Spotify Connect playback via API.
+  const shuffleBtn = document.getElementById('np-shuffle-btn');
+  if (shuffleBtn) {
+    shuffleBtn.style.display = '';
+    shuffleBtn.classList.toggle('active', !!state.shuffle);
+    shuffleBtn.title = 'Shuffle (applies to Spotify Connect playback)';
+  }
+
+  const badge = document.getElementById('np-badge');
+  if (badge) badge.textContent = 'LIVE';
 }
 
+// Unified renderer. Always shows the styled bar. Below it:
+//   - playlist:  CUSTOM tracklist (we own it → can sync highlight to /me/player)
+//   - track:     nothing (Spotify plays on the user's Connect device)
+function showNowPlaying(item) {
+  renderNowPlayingCard(item);
+  // Kick off the currently-playing poll so the bar tracks the real song.
+  startCurrentlyPlayingPoll();
+  const media = document.getElementById('np-media');
+  if (!media) return;
 
-function showNowPlayingEmbed(track, mood, spotifyId) {
-  document.getElementById('now-playing-wrap').classList.remove('hidden');
-  document.getElementById('np-track').textContent = track;
-  document.getElementById('np-meta').textContent = `${mood.replace('_',' ')} · Spotify embed`;
-  const wrap = document.getElementById('embed-wrap');
-  wrap.classList.remove('hidden');
-  // Recreate iframe each time so Spotify re-initializes playback
-  wrap.innerHTML = `<iframe
-    src="https://open.spotify.com/embed/playlist/${spotifyId}?utm_source=generator&autoplay=1"
-    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-    loading="lazy"></iframe>`;
-  log(`✓ Embed ready. Press ▶ in the player below.`, 'ok');
+  if (item.type === 'playlist') {
+    // Render OUR own tracklist so the active-track highlight can be driven by
+    // /me/player (the embed iframe's highlight can't be told what to show — it's
+    // a sandboxed cross-origin component).
+    media.classList.remove('hidden');
+    media.innerHTML = '<div class="np-tracklist-loading">Loading tracklist…</div>';
+    fetchPlaylistTracks(item.id).then(tracks => {
+      if (tracks && tracks.length) {
+        renderCustomTracklist(item, tracks);
+        // Trigger an immediate poll so the row that's playing highlights right away.
+        setTimeout(() => { try { pollCurrentlyPlayingTick(); } catch {} }, 200);
+      } else {
+        // API didn't return tracks (rate-limit, big playlist past 100, etc.)
+        // Fall back to the embed iframe so the user still sees SOMETHING — and
+        // tell them why the highlight won't be perfect.
+        media.innerHTML = `
+          <div class="np-tracklist-loading">
+            Couldn't fetch tracklist via API — falling back to Spotify embed
+            (highlight may not match what's actually playing).
+          </div>
+          <iframe
+            src="https://open.spotify.com/embed/playlist/${item.id}?utm_source=generator&theme=0"
+            style="width:100%;height:340px;border:0;border-radius:0;display:block;"
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            loading="lazy"></iframe>`;
+      }
+    });
+    return;
+  }
+
+  // Single track: the strip is enough — Spotify plays on the user's Connect device.
+  media.classList.add('hidden');
+  media.innerHTML = '';
 }
 
-async function toggleDemoMode(on) {
-  state.demoMode = on;
-  document.getElementById('demo-toggle-label').classList.toggle('on', on);
-  log(on ? '🧪 Demo Mode ON — using Spotify embed' : '🔌 Live Mode — using Spotify API', 'info');
+// ── LIVE NOW-PLAYING POLLER ──
+// Polls /v1/me/player every 5s in Live mode so the strip (play/pause + shuffle +
+// track label + open link) mirrors EVERYTHING Spotify is actually doing — exactly
+// like the Spotify app's now-playing view. /me/player returns shuffle_state /
+// repeat_state / is_playing / item / device, vs. /currently-playing which only had
+// is_playing + item.
+async function pollCurrentlyPlayingTick() {
+  if (!state.accessToken) return;
+  try {
+    const r = await fetch('https://api.spotify.com/v1/me/player', {
+      headers: { Authorization: `Bearer ${state.accessToken}` }
+    });
+    if (r.status === 204) {
+      // Nothing playing on any device. Make this visible so the user knows the
+      // bar is alive — instead of leaving a stale "Playlist: …" label.
+      const stripTrack = document.getElementById('np-strip-track');
+      if (stripTrack && state.currentItem) {
+        const prefix = state.currentItem.type === 'playlist' ? 'Playlist' : 'Song';
+        stripTrack.textContent = `${prefix}: ${state.currentItem.name} · waiting for Spotify…`;
+      }
+      const playBtn = document.getElementById('np-play-btn');
+      if (playBtn) { playBtn.textContent = '▶'; state.isPaused = true; }
+      // Don't clear activeDeviceId here — keep last known so commands can wake it.
+      return;
+    }
+    if (!r.ok) return;
+    const j = await r.json();
 
-  if (on) return;
+    // ── DEVICE: always follow Spotify ──
+    // Whatever device Spotify says is currently active is what we'll command.
+    // This eliminates the split-brain (we display device A but command device B).
+    if (j.device && j.device.id) {
+      state.activeDeviceId = j.device.id;
+    }
 
-  // Leaving demo mode — hide embed and verify we're ready for API playback
-  const wrap = document.getElementById('embed-wrap');
-  if (wrap) { wrap.classList.add('hidden'); wrap.innerHTML = ''; }
+    // ── SHUFFLE: adaptive lockout ──
+    // After the user clicks shuffle we lock for up to 8s. As soon as Spotify
+    // reports the matching state, RELEASE the lock and resume mirroring. If
+    // Spotify never matches (silently rejected), the timeout fires and we
+    // sync to truth — so the button never lies for more than ~8s.
+    const shuffleBtn = document.getElementById('np-shuffle-btn');
+    if (typeof j.shuffle_state === 'boolean') {
+      const lockActive = Date.now() < state.shuffleLockUntil;
+      if (lockActive && state.shuffleIntent === j.shuffle_state) {
+        // Spotify caught up to our intent — release the lock immediately.
+        state.shuffleLockUntil = 0;
+        state.shuffleIntent = null;
+      }
+      if (Date.now() >= state.shuffleLockUntil) {
+        state.shuffle = j.shuffle_state;
+        if (shuffleBtn) shuffleBtn.classList.toggle('active', state.shuffle);
+        state.shuffleIntent = null;
+      }
+    }
+
+    // ── PLAY/PAUSE: adaptive lockout (same pattern, shorter window) ──
+    const playBtn = document.getElementById('np-play-btn');
+    if (typeof j.is_playing === 'boolean') {
+      const playing = !!j.is_playing;
+      const lockActive = Date.now() < state.playLockUntil;
+      if (lockActive && state.playIntent === playing) {
+        state.playLockUntil = 0;
+        state.playIntent = null;
+      }
+      if (Date.now() >= state.playLockUntil) {
+        state.isPaused = !playing;
+        if (playBtn) playBtn.textContent = playing ? '⏸' : '▶';
+        state.playIntent = null;
+      }
+    }
+
+    const item = j.item;
+    if (!item) return;
+
+    // ── TRACK LABEL: always refresh, cheap textContent compare avoids DOM thrash ──
+    const stripTrack = document.getElementById('np-strip-track');
+    if (stripTrack) {
+      const artists = (item.artists || []).map(a => a.name).join(', ');
+      const ctxName = (state.currentItem?.type === 'playlist' && state.currentItem.name) || '';
+      const ctx = ctxName ? ` · from ${ctxName}` : '';
+      const newText = `Now: ${item.name}${artists ? ' — ' + artists : ''}${ctx}`;
+      if (stripTrack.textContent !== newText) stripTrack.textContent = newText;
+    }
+
+    // Open-in-Spotify link points at the actual track now.
+    const openLink = document.getElementById('np-open-link');
+    if (openLink && item.external_urls?.spotify) openLink.href = item.external_urls.spotify;
+
+    // Sync the custom tracklist's "currently playing" row to match /me/player.
+    // No-op when the custom list isn't mounted (single-track item).
+    highlightCurrentTrack(item.id);
+
+    if (item.id !== state.lastTrackId) state.lastTrackId = item.id;
+  } catch {
+    // network blip — try again next tick
+  }
+}
+
+function startCurrentlyPlayingPoll() {
+  if (!state.accessToken) return;
+  stopCurrentlyPlayingPoll();
+  pollCurrentlyPlayingTick(); // run once immediately so the bar updates fast
+  // 2s cadence — fast enough to feel "live" but well under Spotify's rate limits
+  // (2s × 60 × 60 × 24 = 43k req/day). Adaptive lockouts mean optimistic clicks
+  // still feel instant; this just shortens the recovery time when intent and
+  // server state diverge.
+  state.nowPlayingPoll = setInterval(pollCurrentlyPlayingTick, 2000);
+}
+
+function stopCurrentlyPlayingPoll() {
+  if (state.nowPlayingPoll) {
+    clearInterval(state.nowPlayingPoll);
+    state.nowPlayingPoll = null;
+  }
+  state.lastTrackId = null;
+}
+
+// ── STOP PLAYBACK ──
+// PUT /me/player/pause on our locked device.
+async function stopPlayback() {
+  // Stop polling — nothing to mirror once we've torn playback down.
+  stopCurrentlyPlayingPoll();
+  // Tear down the media iframe (clears any fallback embed).
+  const media = document.getElementById('np-media');
+  if (media) { media.innerHTML = ''; media.classList.add('hidden'); }
+  // Ask Spotify to pause on OUR locked device (not whatever Spotify thinks is
+  // "active" right now — that might be a different tab the user opened).
+  if (state.accessToken) {
+    try {
+      await fetch(deviceUrl('https://api.spotify.com/v1/me/player/pause'), {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${state.accessToken}` }
+      });
+    } catch {}
+  }
+  state.isPaused = true;
+  const btn = document.getElementById('np-play-btn');
+  if (btn) btn.textContent = '▶';
+}
+
+// ── SKIP TO NEXT TRACK ──
+async function skipNext() {
+  if (!state.accessToken) { log('Connect Spotify first.', 'err'); return; }
+  try {
+    let r = await fetch(deviceUrl('https://api.spotify.com/v1/me/player/next'), {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${state.accessToken}` }
+    });
+    if (r.status === 404) {
+      const next = await rebindActiveDevice();
+      if (next) {
+        r = await fetch(deviceUrl('https://api.spotify.com/v1/me/player/next'), {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${state.accessToken}` }
+        });
+      }
+    }
+    if (r.ok) {
+      state.isPaused = false;
+      document.getElementById('np-play-btn').textContent = '⏸';
+      log('⏭ Skipped to next track', 'ok');
+      setTimeout(() => { try { pollCurrentlyPlayingTick(); } catch {} }, 600);
+    } else if (r.status === 404) {
+      log('No active Spotify device to skip on.', 'err');
+    } else if (r.status === 403) {
+      log('Spotify rejected skip — Premium required.', 'err');
+    } else {
+      log(`Skip returned HTTP ${r.status}`, 'err');
+    }
+  } catch(e) { log(`Skip error: ${e.message}`, 'err'); }
+}
+
+// ── SHUFFLE TOGGLE ──
+// Pushes the new shuffle state to Spotify immediately (and also re-applies on
+// the next playlist play via playQueueItem).
+async function toggleShuffle() {
+  state.shuffle = !state.shuffle;
+  // Adaptive lockout: 8s MAX, but the poll releases it the moment Spotify
+  // confirms our intent. Without it, the poll's eventual-consistency window
+  // makes the button revert; with too long a fixed window, a silently-rejected
+  // toggle (Premium quirks etc.) leaves the button lying for 10s.
+  state.shuffleIntent = state.shuffle;
+  state.shuffleLockUntil = Date.now() + 8000;
+  const btn = document.getElementById('np-shuffle-btn');
+  if (btn) btn.classList.toggle('active', state.shuffle);
+  log(state.shuffle ? '🔀 Shuffle ON' : '➡ Shuffle OFF', 'info');
 
   if (!state.accessToken) {
-    log('⚠ Not connected. Click "Connect to Spotify" in Step 01, then you can play on your device.', 'err');
+    log('Connect Spotify first to apply shuffle on your device.', 'err');
     return;
   }
-  const devices = await listDevices();
-  if (!devices.length) {
-    log('⚠ No Spotify devices found. Open Spotify on a phone/iPad/desktop — or we can launch the Web Player for you.', 'err');
-    return;
+
+  // Make sure we have a device to talk to. If state.activeDeviceId is missing
+  // (e.g. user clicked shuffle before playing anything), pick & lock one now.
+  if (!state.activeDeviceId) {
+    const devs = await listDevices();
+    const pick = devs.find(d => d.is_active) || devs.find(d => !d.is_restricted) || devs[0];
+    if (pick) {
+      if (!pick.is_active) await transferPlaybackTo(pick.id);
+      state.activeDeviceId = pick.id;
+    }
   }
-  const active = devices.find(d => d.is_active);
-  const names = devices.map(d => d.name + (d.is_active ? ' ★' : '')).join(', ');
-  if (active) {
-    log(`✓ Ready. Devices: ${names}. Pick a mood → pick a playlist → it plays on ${active.name}.`, 'ok');
-  } else {
-    log(`Devices: ${names}. None active — Store DJ will auto-transfer to the first one when you pick a playlist.`, 'info');
-  }
-}
 
-// ── PLAYLIST SEARCH ──
-let searchTimeout;
-function searchPlaylists(q) {
-  clearTimeout(searchTimeout);
-  if (!q) { document.getElementById('playlist-results').innerHTML = ''; return; }
-  searchTimeout = setTimeout(() => doSearch(q), 400);
-}
-
-async function doSearch(q) {
-  const token = getToken();
-  if (!token) return;
   try {
-    const d = await spotifyGet(`https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=playlist&limit=6`);
-    renderResults(d.playlists?.items?.filter(p=>p) || []);
-  } catch(e) { log('Search error: ' + e.message, 'err'); }
+    let r = await fetch(deviceUrl('https://api.spotify.com/v1/me/player/shuffle', `state=${state.shuffle}`), {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${state.accessToken}` }
+    });
+
+    // 404 means our locked device disappeared (closed the tab, phone locked, etc.)
+    // Rebind to a new device and retry once — keeps the user's intent honored.
+    if (r.status === 404) {
+      const next = await rebindActiveDevice();
+      if (next) {
+        r = await fetch(deviceUrl('https://api.spotify.com/v1/me/player/shuffle', `state=${state.shuffle}`), {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${state.accessToken}` }
+        });
+      }
+    }
+
+    if (r.ok) {
+      log(`✓ Shuffle ${state.shuffle ? 'ON' : 'OFF'} applied`, 'ok');
+      // "Shuffle right away" — when turning shuffle ON, also skip to next so
+      // the user immediately hears a randomized track (Spotify's API alone just
+      // flips the bit and lets the current track finish, which feels broken).
+      // When turning shuffle OFF, do NOT skip — match Spotify's actual behavior:
+      // the current track keeps playing, the queue reorders to original from here.
+      if (state.shuffle) {
+        try {
+          const nx = await fetch(deviceUrl('https://api.spotify.com/v1/me/player/next'), {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${state.accessToken}` }
+          });
+          if (nx.ok) {
+            state.isPaused = false;
+            const playBtn = document.getElementById('np-play-btn');
+            if (playBtn) playBtn.textContent = '⏸';
+            log('⏭ Jumped to a shuffled track', 'ok');
+          }
+        } catch {}
+      } else {
+        log('Shuffle off — current track keeps playing, queue reorders from here', 'info');
+      }
+      // Kick a poll ~600ms later so the strip + open-link refresh to the new
+      // track immediately — instead of waiting up to 3s for the next interval.
+      setTimeout(() => { try { pollCurrentlyPlayingTick(); } catch {} }, 600);
+    } else if (r.status === 404) {
+      log('Shuffle: no active Spotify device — start a track first, then toggle shuffle.', 'err');
+    } else if (r.status === 403) {
+      log('Shuffle: Spotify rejected (Premium required).', 'err');
+    } else {
+      log(`Shuffle returned HTTP ${r.status}`, 'err');
+    }
+  } catch(e) { log(`Shuffle error: ${e.message}`, 'err'); }
 }
 
-async function fetchMyPlaylists() {
-  const token = getToken();
-  if (!token) { log('Connect Spotify first', 'err'); return; }
+// ── PLAY / PAUSE TOGGLE ──
+async function togglePlayPause() {
+  if (!state.accessToken) { log('Connect Spotify first.', 'err'); return; }
+  const btn = document.getElementById('np-play-btn');
+  // Optimistic flip + adaptive lockout (4s) so the button feels instant but
+  // self-corrects if Spotify rejects (e.g. ALREADY_PAUSED on stale state).
+  const targetPlaying = !!state.isPaused; // we're toggling, so target = opposite of current
+  state.playIntent = targetPlaying;
+  state.playLockUntil = Date.now() + 4000;
+  state.isPaused = !targetPlaying;
+  btn.textContent = targetPlaying ? '⏸' : '▶';
+
+  const url = deviceUrl(targetPlaying
+    ? 'https://api.spotify.com/v1/me/player/play'
+    : 'https://api.spotify.com/v1/me/player/pause');
   try {
-    const d = await spotifyGet('https://api.spotify.com/v1/me/playlists?limit=20');
-    renderResults(d.items?.filter(p=>p) || []);
-    log(`Loaded ${d.items.length} of your playlists`, 'ok');
-  } catch(e) { log('Error: ' + e.message, 'err'); }
+    let r = await fetch(url, { method: 'PUT', headers: { Authorization: `Bearer ${state.accessToken}` } });
+    // 404 → device gone. Rebind and retry so the play/pause button keeps working.
+    if (r.status === 404) {
+      const next = await rebindActiveDevice();
+      if (next) {
+        const url2 = deviceUrl(targetPlaying
+          ? 'https://api.spotify.com/v1/me/player/play'
+          : 'https://api.spotify.com/v1/me/player/pause');
+        r = await fetch(url2, { method: 'PUT', headers: { Authorization: `Bearer ${state.accessToken}` } });
+      }
+    }
+    if (r.ok) {
+      log(targetPlaying ? '▶ Resumed' : '⏸ Paused', 'ok');
+      setTimeout(() => { try { pollCurrentlyPlayingTick(); } catch {} }, 500);
+    } else if (r.status === 404) {
+      // Couldn't even rebind — revert the optimistic flip so the button matches reality.
+      state.isPaused = !targetPlaying; btn.textContent = targetPlaying ? '▶' : '⏸';
+      state.playIntent = null; state.playLockUntil = 0;
+      log('No active Spotify device to pause/resume.', 'err');
+    } else if (r.status === 403) {
+      let msg = 'Spotify rejected pause/resume';
+      try {
+        const j = await r.json();
+        // If Spotify says we're already in the state we asked for, lock the truth
+        // immediately so the poll doesn't fight us (and clear our intent).
+        if (j.error?.reason === 'ALREADY_PAUSED') {
+          state.isPaused = true; btn.textContent = '▶';
+          state.playIntent = null; state.playLockUntil = 0;
+          log('⏸ Already paused', 'info'); return;
+        }
+        if (j.error?.reason === 'NOT_PAUSED') {
+          state.isPaused = false; btn.textContent = '⏸';
+          state.playIntent = null; state.playLockUntil = 0;
+          log('▶ Already playing', 'info'); return;
+        }
+        if (j.error?.message) msg = j.error.message;
+      } catch {}
+      log(msg, 'err');
+    } else {
+      log(`Pause/resume returned HTTP ${r.status}`, 'err');
+    }
+  } catch(e) { log(`Pause/resume error: ${e.message}`, 'err'); }
 }
 
-function renderResults(playlists) {
-  const el = document.getElementById('playlist-results');
-  if (!playlists.length) { el.innerHTML = '<p style="font-size:0.78rem;color:var(--muted);padding:0.5rem">No results</p>'; return; }
-  el.innerHTML = playlists.map(p => `
-    <div class="playlist-result" onclick="playPlaylist('${p.uri}','${escHtml(p.name)}')">
-      ${p.images?.[0] ? `<img src="${p.images[0].url}" alt="">` : '<div style="width:36px;height:36px;background:var(--border);border-radius:4px"></div>'}
-      <div>
-        <div class="pr-name">${escHtml(p.name)}</div>
-        <div class="pr-tracks">${p.tracks?.total ?? '?'} tracks</div>
-      </div>
+function escHtml(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+
+// ── ACTIVE SCHEDULE HELPERS ──
+function getActiveSchedule() {
+  return state.schedules.find(s => s.id === state.activeScheduleId) || state.schedules[0] || null;
+}
+
+function persistSchedules() {
+  localStorage.setItem('storedj_schedules_v2', JSON.stringify(state.schedules));
+  localStorage.setItem('storedj_active_schedule', state.activeScheduleId || '');
+}
+
+function persistMoods() {
+  // Don't persist transient search-query text separately; moods dict carries everything.
+  const serializable = {};
+  Object.entries(state.moods).forEach(([k, v]) => {
+    serializable[k] = {
+      name: v.name, emoji: v.emoji, sub: v.sub, query: v.query,
+      custom: !!v.custom, queue: v.queue || [],
+    };
+  });
+  localStorage.setItem('storedj_moods_v2', JSON.stringify(serializable));
+}
+
+// ── SCHEDULE CRUD ──
+function createSchedule() {
+  const name = (prompt('Name this schedule (e.g. "Weekend", "Festival")', 'New schedule') || '').trim();
+  if (!name) return;
+  const sch = { id: uid('sch'), name, phases: defaultSchedule().phases.map(p => ({ ...p, id: uid('ph') })) };
+  state.schedules.push(sch);
+  state.activeScheduleId = sch.id;
+  persistSchedules();
+  renderScheduleToolbar();
+  renderPhases();
+  log(`✓ Created schedule "${name}"`, 'ok');
+}
+
+function renameSchedule() {
+  const sch = getActiveSchedule();
+  if (!sch) return;
+  const name = (prompt('Rename schedule', sch.name) || '').trim();
+  if (!name) return;
+  sch.name = name;
+  persistSchedules();
+  renderScheduleToolbar();
+  log(`✓ Renamed to "${name}"`, 'ok');
+}
+
+function duplicateSchedule() {
+  const sch = getActiveSchedule();
+  if (!sch) return;
+  const copy = {
+    id: uid('sch'),
+    name: sch.name + ' (copy)',
+    phases: sch.phases.map(p => ({ ...p, id: uid('ph') })),
+  };
+  state.schedules.push(copy);
+  state.activeScheduleId = copy.id;
+  persistSchedules();
+  renderScheduleToolbar();
+  renderPhases();
+  log(`✓ Duplicated as "${copy.name}"`, 'ok');
+}
+
+function deleteSchedule() {
+  if (state.schedules.length <= 1) { log('Keep at least one schedule', 'err'); return; }
+  const sch = getActiveSchedule();
+  if (!sch) return;
+  if (!confirm(`Delete schedule "${sch.name}"?`)) return;
+  state.schedules = state.schedules.filter(s => s.id !== sch.id);
+  state.activeScheduleId = state.schedules[0].id;
+  persistSchedules();
+  renderScheduleToolbar();
+  renderPhases();
+  log(`✓ Deleted "${sch.name}"`, 'info');
+}
+
+function switchSchedule(id) {
+  if (!state.schedules.find(s => s.id === id)) return;
+  state.activeScheduleId = id;
+  persistSchedules();
+  renderPhases();
+  updateSlotLabel(new Date());
+  lastPlayedSlot = null;
+  log(`↻ Active schedule: ${getActiveSchedule().name}`, 'info');
+}
+
+// ── PHASE CRUD ──
+function addPhase() {
+  const sch = getActiveSchedule();
+  if (!sch) return;
+  const last = sch.phases[sch.phases.length - 1];
+  const nextStart = last ? bumpHhmm(last.start, 60) : '08:00';
+  sch.phases.push({ id: uid('ph'), name: `Phase ${sch.phases.length + 1}`, start: nextStart, mood: Object.keys(state.moods)[0] });
+  persistSchedules();
+  renderPhases();
+}
+
+function bumpHhmm(hhmm, minutes) {
+  const t = (hhmmToMinutes(hhmm) + minutes) % 1440;
+  const h = Math.floor(t / 60), m = t % 60;
+  return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`;
+}
+
+function removePhase(phaseId) {
+  const sch = getActiveSchedule();
+  if (!sch) return;
+  if (sch.phases.length <= 1) { log('Keep at least one phase', 'err'); return; }
+  sch.phases = sch.phases.filter(p => p.id !== phaseId);
+  persistSchedules();
+  renderPhases();
+}
+
+function updatePhase(phaseId, field, value) {
+  const sch = getActiveSchedule();
+  if (!sch) return;
+  const p = sch.phases.find(x => x.id === phaseId);
+  if (!p) return;
+  p[field] = value;
+  // Don't persist per-keystroke for name; rely on Save. But time and mood should persist so scheduler sees them.
+  persistSchedules();
+}
+
+// ── SCHEDULE UI RENDER ──
+function renderScheduleToolbar() {
+  const sel = document.getElementById('schedule-picker');
+  if (!sel) return;
+  sel.innerHTML = state.schedules.map(s =>
+    `<option value="${s.id}" ${s.id === state.activeScheduleId ? 'selected' : ''}>${escHtml(s.name)}</option>`
+  ).join('');
+}
+
+// Convert 24h "HH:MM" to 12h parts { hour12: 1-12, minute: 0-59, ampm: 'AM'|'PM' }
+function hhmmTo12h(hhmm) {
+  const [h, m] = (hhmm || '00:00').split(':').map(n => parseInt(n, 10) || 0);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  let hour12 = h % 12;
+  if (hour12 === 0) hour12 = 12;
+  return { hour12, minute: m, ampm };
+}
+
+// Convert 12h parts back to 24h "HH:MM"
+function twelveHTohhmm(hour12, minute, ampm) {
+  hour12 = parseInt(hour12, 10);
+  minute = parseInt(minute, 10) || 0;
+  let h = hour12 % 12;
+  if (ampm === 'PM') h += 12;
+  return `${String(h).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+}
+
+// Build the three <select>s for the time picker (hour, minute, AM/PM)
+function renderTimePicker(phaseId, hhmm) {
+  const { hour12, minute, ampm } = hhmmTo12h(hhmm);
+  const hours = Array.from({ length: 12 }, (_, i) => i + 1)
+    .map(h => `<option value="${h}"${h === hour12 ? ' selected' : ''}>${h}</option>`).join('');
+  const minutes = Array.from({ length: 12 }, (_, i) => i * 5)
+    .map(m => `<option value="${m}"${m === minute ? ' selected' : ''}>${String(m).padStart(2, '0')}</option>`).join('');
+  const ampms = ['AM', 'PM']
+    .map(a => `<option value="${a}"${a === ampm ? ' selected' : ''}>${a}</option>`).join('');
+  return `
+    <div class="time-picker">
+      <select onchange="updatePhaseTime('${phaseId}', this.value, null, null)">${hours}</select>
+      <select onchange="updatePhaseTime('${phaseId}', null, this.value, null)">${minutes}</select>
+      <select onchange="updatePhaseTime('${phaseId}', null, null, this.value)">${ampms}</select>
+    </div>`;
+}
+
+// Update one part of a phase's time without re-rendering the list (so the dropdown stays open)
+function updatePhaseTime(phaseId, hourOrNull, minuteOrNull, ampmOrNull) {
+  const sch = getActiveSchedule();
+  if (!sch) return;
+  const p = sch.phases.find(x => x.id === phaseId);
+  if (!p) return;
+  const parts = hhmmTo12h(p.start);
+  if (hourOrNull !== null) parts.hour12 = parseInt(hourOrNull, 10);
+  if (minuteOrNull !== null) parts.minute = parseInt(minuteOrNull, 10);
+  if (ampmOrNull !== null) parts.ampm = ampmOrNull;
+  p.start = twelveHTohhmm(parts.hour12, parts.minute, parts.ampm);
+  // Persist + refresh the live "current phase" label, but DO NOT re-render phase list
+  // (would destroy the dropdown the user is interacting with).
+  persistSchedules();
+  updateSlotLabel(new Date());
+}
+
+function renderPhases() {
+  const root = document.getElementById('phase-list');
+  if (!root) return;
+  const sch = getActiveSchedule();
+  if (!sch) { root.innerHTML = ''; return; }
+  const moodOptions = Object.entries(state.moods)
+    .map(([k, m]) => `<option value="${k}">${m.emoji} ${escHtml(m.name)}</option>`).join('');
+  const sorted = [...sch.phases].sort((a, b) => hhmmToMinutes(a.start) - hhmmToMinutes(b.start));
+  root.innerHTML = sorted.map((p, i) => `
+    <div class="phase-row" data-phase="${p.id}">
+      <div class="phase-num">${i + 1}</div>
+      <input type="text" value="${escHtml(p.name)}" placeholder="Phase name"
+             oninput="updatePhase('${p.id}', 'name', this.value)">
+      ${renderTimePicker(p.id, p.start)}
+      <select onchange="updatePhase('${p.id}', 'mood', this.value)">
+        ${moodOptions.replace(`value="${p.mood}"`, `value="${p.mood}" selected`)}
+      </select>
+      <button class="phase-remove" onclick="removePhase('${p.id}')" title="Remove phase">✕</button>
     </div>
   `).join('');
 }
 
-async function playPlaylist(uri, name) {
-  const res = await spotifyPut('https://api.spotify.com/v1/me/player/play', { context_uri: uri, offset: { position: 0 } });
-  if (res.status === 204) {
-    log(`✓ Playing: ${name}`, 'ok');
-    showNowPlaying(name, 'Custom playlist');
-  } else {
-    log(`Could not play — status ${res.status}`, 'err');
-  }
+// Kept for any stray callers; phase re-render now only happens on Save.
+let _renderPhasesTimer;
+function renderPhasesSoon() {
+  clearTimeout(_renderPhasesTimer);
+  _renderPhasesTimer = setTimeout(() => { renderPhases(); updateSlotLabel(new Date()); }, 400);
 }
 
-function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
-
-// ── SCHEDULE ──
+// ── SAVE SCHEDULE ──
+// Just saves. Does NOT auto-start the scheduler (which would trigger playback).
 function saveSchedule() {
-  console.log('[StoreDJ] saveSchedule() called');
-  let schedule;
-  try {
-    schedule = {
-      morning:   document.getElementById('sched-morning').value,
-      afternoon: document.getElementById('sched-afternoon').value,
-      evening:   document.getElementById('sched-evening').value,
-      night:     document.getElementById('sched-night').value,
-    };
-    localStorage.setItem('storedj_schedule', JSON.stringify(schedule));
-    log(`✓ Schedule saved: morning=${schedule.morning}, afternoon=${schedule.afternoon}, evening=${schedule.evening}, closing=${schedule.night}`, 'ok');
-    console.log('[StoreDJ] schedule persisted', schedule);
-  } catch (e) {
-    log(`Could not save: ${e.message}`, 'err');
-    console.error('[StoreDJ] saveSchedule error', e);
-    return;
-  }
-
-  // Auto-start the scheduler (wrapped so the save itself is never blocked)
-  try {
-    lastPlayedSlot = null;
-    if (!state.schedulerRunning) {
-      startScheduler();
-    } else {
-      runSchedulerTick();
-    }
-  } catch (e) {
-    log(`Auto-start failed: ${e.message} (schedule saved OK)`, 'err');
-    console.error('[StoreDJ] auto-start error', e);
-  }
+  const sch = getActiveSchedule();
+  if (!sch) { log('No active schedule', 'err'); return; }
+  if (!sch.phases.length) { log('Add at least one phase before saving', 'err'); return; }
+  const bad = sch.phases.find(p => !p.name || !p.start || !p.mood);
+  if (bad) { log('Every phase needs a name, start time and mood', 'err'); return; }
+  persistSchedules();
+  renderPhases();
+  updateSlotLabel(new Date());
+  const sorted = [...sch.phases].sort((a, b) => hhmmToMinutes(a.start) - hhmmToMinutes(b.start));
+  const summary = sorted.map(p => `${p.name}@${fmt12h(p.start)}→${state.moods[p.mood]?.name || p.mood}`).join(', ');
+  log(`✓ Schedule "${sch.name}" saved — ${summary}`, 'ok');
+  log(`Click "Start auto-scheduler" to begin playback at the scheduled phase times.`, 'info');
 }
 
-function getSchedule() {
-  const saved = localStorage.getItem('storedj_schedule');
-  if (saved) return JSON.parse(saved);
-  return {
-    morning: document.getElementById('sched-morning').value,
-    afternoon: document.getElementById('sched-afternoon').value,
-    evening: document.getElementById('sched-evening').value,
-    night: document.getElementById('sched-night').value,
-  };
+function fmt12h(hhmm) {
+  const { hour12, minute, ampm } = hhmmTo12h(hhmm);
+  return `${hour12}:${String(minute).padStart(2,'0')} ${ampm}`;
+}
+
+function updateSchedulerBtn() {
+  const btn = document.getElementById('btn-scheduler');
+  if (!btn) return;
+  if (state.schedulerRunning) {
+    btn.textContent = '⏸ Stop auto-scheduler';
+    btn.classList.add('scheduler-on');
+  } else {
+    btn.textContent = '▶ Start auto-scheduler';
+    btn.classList.remove('scheduler-on');
+  }
 }
 
 function startScheduler() {
-  if (!state.demoMode && !getToken()) { log('Connect Spotify first, or turn on 🧪 Demo Mode', 'err'); return; }
+  if (!getToken()) { log('Connect Spotify first', 'err'); return; }
   if (state.schedulerRunning) {
     clearInterval(state.schedulerInterval);
+    state.schedulerInterval = null;
     state.schedulerRunning = false;
     document.getElementById('status-scheduler').textContent = 'OFF';
-    log('Scheduler stopped', 'info');
+    updateSchedulerBtn();
+    // Also stop whatever is currently playing.
+    stopPlayback();
+    log('⏸ Scheduler stopped — playback paused', 'info');
     return;
   }
   state.schedulerRunning = true;
   document.getElementById('status-scheduler').textContent = 'ON';
+  updateSchedulerBtn();
   log('✓ Auto-scheduler started — checks every minute', 'ok');
+  lastPlayedSlot = null;
   runSchedulerTick();
   state.schedulerInterval = setInterval(runSchedulerTick, 60000);
 }
 
 let lastPlayedSlot = null;
 async function runSchedulerTick() {
-  const hour = new Date().getHours();
-  const slot = getSlot(hour);
-  if (slot === lastPlayedSlot) return;
-  const schedule = getSchedule();
-  const mood = schedule[slot];
-  if (!mood) return;
-  lastPlayedSlot = slot;
+  const phase = getActivePhase(new Date());
+  if (!phase) return;
+  const slotKey = phase.id;
+  if (slotKey === lastPlayedSlot) return;
+  lastPlayedSlot = slotKey;
 
-  // Mark the matching mood button as active (visual feedback)
+  const mood = state.moods[phase.mood];
+  if (!mood) { log(`Phase "${phase.name}": unknown mood "${phase.mood}"`, 'err'); return; }
+
+  // Visual: mark the matching mood button
   document.querySelectorAll('.mood-btn').forEach(b => {
-    b.classList.toggle('active', b.getAttribute('onclick')?.includes(`'${mood}'`));
+    b.classList.toggle('active', b.dataset.mood === phase.mood);
   });
 
-  const m = state.moodMap[mood];
-  if (!m) return;
-
-  // Auto-pick the #1 search result if no playlist saved for this mood
-  if (!m.spotifyId) {
-    log(`⏰ Slot → ${slot}: no playlist set for "${m.name}" — auto-picking #1 search result…`, 'info');
-    const { token, items } = await searchPlaylistsForMood(mood, 1);
+  // If queue is empty, auto-pick the #1 playlist for this mood
+  if (!mood.queue.length) {
+    log(`⏰ ${phase.name} → "${mood.name}" queue empty. Auto-picking top playlist…`, 'info');
+    const { token, items } = await searchSpotify(mood.query, 'playlist', 1);
     if (!token || !items.length) {
-      log(`⚠ Scheduler can't auto-pick — paste Client ID + Secret, or click "${m.name}" and choose manually.`, 'err');
+      log(`⚠ Can't auto-pick for "${mood.name}". Click the mood in Step 03 and choose one.`, 'err');
       return;
     }
-    m.spotifyId = items[0].id;
-    const saved = JSON.parse(localStorage.getItem('storedj_mood_urls') || '{}');
-    saved[mood] = items[0].id;
-    localStorage.setItem('storedj_mood_urls', JSON.stringify(saved));
-    const input = document.getElementById('mood-url-' + mood);
-    if (input) input.value = items[0].id;
-    log(`✓ Auto-picked "${items[0].name}"`, 'ok');
+    const it = items[0];
+    mood.queue.push({
+      type: 'playlist', id: it.id, uri: it.uri,
+      name: it.name, image: it.images?.[0]?.url || '',
+      meta: formatPlaylistMeta(it),
+    });
+    persistMoods();
+    renderLibrary();
+    log(`✓ Auto-picked "${it.name}" for ${mood.name}`, 'ok');
   }
 
-  log(`⏰ Slot → ${slot} → playing ${m.name}`, 'info');
-  if (state.demoMode) {
-    showNowPlayingEmbed(m.name, mood, m.spotifyId);
-  } else {
-    await playOnSpotify(m.spotifyId, m.name, mood, '?');
-  }
+  const item = mood.queue[0];
+  log(`⏰ ${phase.name} → ${mood.name} → ${item.name}`, 'info');
+
+  // Show the now-playing card IMMEDIATELY (optimistic) so the user sees the
+  // scheduled playlist appear in the live tab right away — before we even hit
+  // the Spotify API. If playback fails (no device etc.) the card stays so the
+  // user knows what was attempted; if it succeeds the live poll takes over and
+  // syncs is_playing / shuffle / track label from Spotify itself.
+  try {
+    showNowPlaying(item);
+    document.getElementById('now-playing-wrap')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } catch {}
+
+  await playQueueItem(item);
 }
 
-// ── PER-MOOD PLAYLIST URL EDITOR ──
-function renderMoodConfig() {
-  const grid = document.getElementById('mood-config-grid');
+// ── MOOD GRID + CREATE MOOD ──
+function renderMoodGrid() {
+  const grid = document.getElementById('mood-grid');
   if (!grid) return;
-  grid.innerHTML = Object.entries(state.moodMap).map(([key, m]) => {
-    const searchUrl = `https://open.spotify.com/search/${encodeURIComponent(m.query)}/playlists`;
-    return `
-    <div class="mood-config-row">
-      <span>${m.name}</span>
-      <input type="text"
-             id="mood-url-${key}"
-             value="${m.spotifyId || ''}"
-             placeholder="Paste Spotify playlist URL or ID"
-             oninput="updateMoodUrl('${key}', this.value)">
-      <a class="find-btn" href="${searchUrl}" target="_blank" rel="noopener"
-         title="Open Spotify playlist search for ${m.name}">🔍 Find</a>
+  const tiles = Object.entries(state.moods).map(([key, m]) => `
+    <button class="mood-btn" data-mood="${key}" onclick="playMood('${key}', this)">
+      <div class="mood-actions">
+        <span class="mood-icon-btn" onclick="event.stopPropagation(); openCreateMoodModal('${key}')" title="Edit mood">✎</span>
+        <span class="mood-icon-btn del" onclick="event.stopPropagation(); deleteMood('${key}')" title="Delete mood">✕</span>
+      </div>
+      <div class="mood-icon">${m.emoji}</div>
+      <div class="mood-label">${escHtml(m.name)}</div>
+      <div class="mood-sub">${escHtml(m.sub || '')}</div>
+    </button>
+  `).join('');
+  grid.innerHTML = tiles + `
+    <button class="mood-btn create" onclick="openCreateMoodModal()">
+      <div class="mood-icon">＋</div>
+      <div class="mood-label">Create mood</div>
+      <div class="mood-sub">Custom search</div>
+    </button>`;
+}
+
+function openCreateMoodModal(editKey) {
+  const editing = editKey ? state.moods[editKey] : null;
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal">
+      <h3>${editing ? 'Edit' : 'Create'} mood</h3>
+      <div class="fields">
+        <div><label>Name</label><input type="text" id="nm-name" value="${editing ? escHtml(editing.name) : ''}" placeholder="e.g. Diwali Evening"></div>
+        <div><label>Emoji (single character)</label><input type="text" id="nm-emoji" maxlength="2" value="${editing ? escHtml(editing.emoji) : '✨'}"></div>
+        <div><label>Short description</label><input type="text" id="nm-sub" value="${editing ? escHtml(editing.sub || '') : ''}" placeholder="e.g. Festive sparkle"></div>
+        <div><label>Search query (keywords)</label><input type="text" id="nm-query" value="${editing ? escHtml(editing.query) : ''}" placeholder="e.g. diwali bollywood festive"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveMoodFromModal('${editKey || ''}')">Save</button>
+      </div>
     </div>`;
+  document.body.appendChild(modal);
+  setTimeout(() => document.getElementById('nm-name').focus(), 50);
+}
+
+function saveMoodFromModal(editKey) {
+  const name = document.getElementById('nm-name').value.trim();
+  const emoji = document.getElementById('nm-emoji').value.trim() || '✨';
+  const sub = document.getElementById('nm-sub').value.trim();
+  const query = document.getElementById('nm-query').value.trim();
+  if (!name || !query) { alert('Name and search query are required'); return; }
+  const key = editKey || ('mood_' + name.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 30) + '_' + Math.random().toString(36).slice(2,5));
+  if (!state.moods[key]) {
+    state.moods[key] = { name, emoji, sub, query, queue: [] };
+  } else {
+    Object.assign(state.moods[key], { name, emoji, sub, query });
+  }
+  persistMoods();
+  // Invalidate picker cache for this mood so next open re-searches both Playlists + Songs.
+  delete state.pickerCache[`${key}:playlist`];
+  delete state.pickerCache[`${key}:track`];
+  renderMoodGrid();
+  renderPhases();   // so new mood appears in phase dropdowns
+  renderLibrary();
+  document.querySelector('.modal-overlay')?.remove();
+  // If the picker is open on this mood, reload the current tab with fresh results.
+  if (state.pickerMood === key && !document.getElementById('mood-picker-wrap')?.classList.contains('hidden')) {
+    loadPickerTab(key, state.pickerTab);
+  }
+  log(`✓ Mood "${name}" ${editKey ? 'updated' : 'created'}`, 'ok');
+}
+
+function deleteMood(key) {
+  const m = state.moods[key];
+  if (!m) return;
+  if (Object.keys(state.moods).length <= 1) { alert('You must keep at least one mood.'); return; }
+  if (!confirm(`☠️ Are you sure you want to KILL the mood "${m.name}"?\n\nThis will permanently delete its queue of ${m.queue.length} item${m.queue.length === 1 ? '' : 's'}. Any schedule phase using this mood will be reassigned.`)) return;
+  delete state.moods[key];
+  const fallback = Object.keys(state.moods)[0];
+  state.schedules.forEach(sch => {
+    sch.phases.forEach(p => { if (p.mood === key) p.mood = fallback; });
+  });
+  persistMoods();
+  persistSchedules();
+  renderMoodGrid();
+  renderPhases();
+  renderLibrary();
+  log(`✓ Deleted mood "${m.name}"`, 'info');
+}
+
+// ── LIBRARY (Step 04) ──
+function renderLibrary() {
+  const root = document.getElementById('library-grid');
+  if (!root) return;
+  root.innerHTML = Object.entries(state.moods).map(([key, m]) => {
+    const expanded = state.libraryExpanded[key] ?? (m.queue.length > 0);
+    const body = expanded ? renderQueue(key, m) : '';
+    return `
+      <div class="lib-mood">
+        <div class="lib-mood-header" onclick="toggleLibrary('${key}')">
+          <span class="lib-mood-icon">${m.emoji}</span>
+          <span class="lib-mood-title">${escHtml(m.name)}</span>
+          <span class="lib-mood-count">${m.queue.length} item${m.queue.length === 1 ? '' : 's'}</span>
+          <span class="lib-mood-toggle">${expanded ? '▾' : '▸'}</span>
+        </div>
+        ${expanded ? `<div class="lib-body">${body}</div>` : ''}
+      </div>`;
   }).join('');
 }
 
-function updateMoodUrl(key, raw) {
-  const id = extractSpotifyId(raw) || raw.trim() || null;
-  state.moodMap[key].spotifyId = id;
-  const saved = JSON.parse(localStorage.getItem('storedj_mood_urls') || '{}');
-  saved[key] = id;
-  localStorage.setItem('storedj_mood_urls', JSON.stringify(saved));
+function renderQueue(moodKey, mood) {
+  const items = mood.queue || [];
+  const rows = items.length
+    ? items.map((q, i) => {
+        const peekId = `libpeek-${moodKey}-${i}`;
+        const peekBtn = q.type === 'playlist'
+          ? `<button class="q-btn" onclick="toggleLibPeek('${moodKey}', ${i}, '${q.id}')" title="Show tracks in this playlist">👁</button>`
+          : '';
+        return `
+        <div class="queue-row">
+          <div class="queue-item" data-idx="${i}">
+            <div class="q-num">${i + 1}</div>
+            ${q.image ? `<img src="${q.image}" alt="">` : '<div class="q-ph"></div>'}
+            <div class="q-info">
+              <div class="q-name"><span class="q-type ${q.type}">${q.type === 'playlist' ? 'PL' : 'SONG'}</span>${escHtml(q.name)}</div>
+              <div class="q-meta">${escHtml(q.meta || '')}</div>
+            </div>
+            <div class="q-controls">
+              <button class="q-btn" onclick="moveQueue('${moodKey}', ${i}, -1)" title="Move up">▲</button>
+              <button class="q-btn" onclick="moveQueue('${moodKey}', ${i}, 1)" title="Move down">▼</button>
+              ${peekBtn}
+              <button class="q-btn" onclick="playQueueIndex('${moodKey}', ${i})" title="Play now">▶</button>
+              <button class="q-btn del" onclick="removeQueueItem('${moodKey}', ${i})" title="Remove">✕</button>
+            </div>
+          </div>
+          <div class="lib-peek hidden" id="${peekId}"></div>
+        </div>`;
+      }).join('')
+    : `<div class="q-empty">Empty — click <strong>+ Add</strong> or pick this mood in Step 03.</div>`;
+  return `
+    ${rows}
+    <div class="lib-footer">
+      <button class="btn-mini" onclick="playMoodFromLib('${moodKey}')">+ Add content</button>
+      <button class="btn-mini" onclick="openCreateMoodModal('${moodKey}')">Edit</button>
+      <button class="btn-mini danger" onclick="deleteMood('${moodKey}')">Delete</button>
+    </div>`;
 }
 
-function restoreMoodUrls() {
-  const saved = JSON.parse(localStorage.getItem('storedj_mood_urls') || '{}');
-  Object.keys(saved).forEach(k => {
-    if (state.moodMap[k] && saved[k]) state.moodMap[k].spotifyId = saved[k];
-  });
+function toggleLibrary(key) {
+  const cur = state.libraryExpanded[key] ?? (state.moods[key]?.queue?.length > 0);
+  state.libraryExpanded[key] = !cur;
+  renderLibrary();
 }
 
-// ── RESTORE SAVED SCHEDULE ──
-window.addEventListener('load', async () => {
-  restoreMoodUrls();
-  renderMoodConfig();
-
-  const saved = localStorage.getItem('storedj_schedule');
-  if (saved) {
-    const s = JSON.parse(saved);
-    ['morning','afternoon','evening','night'].forEach(k => {
-      const el = document.getElementById('sched-' + k);
-      if (el && s[k]) el.value = s[k];
-    });
-    log('Schedule restored from last session', 'info');
+// Inline peek for library queue items (Step 04). Uses Spotify embed for universal access.
+function toggleLibPeek(moodKey, idx, playlistId) {
+  const panel = document.getElementById(`libpeek-${moodKey}-${idx}`);
+  if (!panel) return;
+  if (!panel.classList.contains('hidden')) {
+    panel.classList.add('hidden');
+    panel.innerHTML = '';
+    return;
   }
+  panel.classList.remove('hidden');
+  panel.innerHTML = `<iframe
+    src="https://open.spotify.com/embed/playlist/${playlistId}?utm_source=generator"
+    style="width:100%;height:360px;border:0;border-radius:8px;"
+    allow="clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+    loading="lazy"></iframe>`;
+}
 
-  // Finish the PKCE flow if we were just redirected back from Spotify
+function moveQueue(moodKey, idx, dir) {
+  const m = state.moods[moodKey];
+  if (!m) return;
+  const j = idx + dir;
+  if (j < 0 || j >= m.queue.length) return;
+  const tmp = m.queue[idx];
+  m.queue[idx] = m.queue[j];
+  m.queue[j] = tmp;
+  persistMoods();
+  renderLibrary();
+}
+
+function removeQueueItem(moodKey, idx) {
+  const m = state.moods[moodKey];
+  if (!m) return;
+  const item = m.queue[idx];
+  m.queue.splice(idx, 1);
+  persistMoods();
+  renderLibrary();
+  log(`– Removed "${item.name}" from ${m.name} queue`, 'info');
+}
+
+async function playQueueIndex(moodKey, idx) {
+  const m = state.moods[moodKey];
+  if (!m || !m.queue[idx]) return;
+  await playQueueItem(m.queue[idx]);
+}
+
+function playMoodFromLib(moodKey) {
+  // Scroll to Step 03 and open picker
+  const grid = document.getElementById('mood-grid');
+  if (grid) grid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const btn = document.querySelector(`.mood-btn[data-mood="${moodKey}"]`);
+  playMood(moodKey, btn);
+}
+
+// ── INIT / MIGRATION ──
+function loadMoodsFromStorage() {
+  // If saved v2 exists, it is the single source of truth (so deleted built-ins stay deleted).
+  const savedV2 = localStorage.getItem('storedj_moods_v2');
+  if (savedV2) {
+    try {
+      const parsed = JSON.parse(savedV2);
+      const moods = {};
+      Object.entries(parsed).forEach(([k, m]) => {
+        moods[k] = {
+          name: m.name || k,
+          emoji: m.emoji || '✨',
+          sub: m.sub || '',
+          query: m.query || '',
+          queue: Array.isArray(m.queue) ? m.queue : [],
+        };
+      });
+      if (Object.keys(moods).length) { state.moods = moods; return; }
+    } catch (e) { console.warn('Could not parse moods_v2', e); }
+  }
+  // Fresh install (or corrupted v2): seed defaults and run v1 migration if present.
+  const moods = {};
+  Object.entries(DEFAULT_MOODS).forEach(([k, d]) => {
+    moods[k] = { ...d, queue: [] };
+  });
+  const legacy = localStorage.getItem('storedj_mood_urls');
+  if (legacy) {
+    try {
+      const legacyIds = JSON.parse(legacy);
+      Object.entries(legacyIds).forEach(([k, id]) => {
+        if (moods[k] && id) {
+          moods[k].queue.push({ type: 'playlist', id, uri: `spotify:playlist:${id}`, name: moods[k].name + ' playlist', image: '', meta: 'Migrated from v1' });
+        }
+      });
+    } catch {}
+  }
+  state.moods = moods;
+}
+
+function loadSchedulesFromStorage() {
+  const savedV2 = localStorage.getItem('storedj_schedules_v2');
+  if (savedV2) {
+    try {
+      const arr = JSON.parse(savedV2);
+      if (Array.isArray(arr) && arr.length) {
+        state.schedules = arr;
+        const activeId = localStorage.getItem('storedj_active_schedule');
+        state.activeScheduleId = arr.find(s => s.id === activeId) ? activeId : arr[0].id;
+        return;
+      }
+    } catch (e) { console.warn('Could not parse schedules_v2', e); }
+  }
+  // Migrate v1: storedj_schedule (moods per fixed slot) + storedj_slottimes (fixed slot times)
+  const legacyMoods = localStorage.getItem('storedj_schedule');
+  const legacyTimes = localStorage.getItem('storedj_slottimes');
+  if (legacyMoods || legacyTimes) {
+    const moods = legacyMoods ? JSON.parse(legacyMoods) : { morning: 'devotional', afternoon: 'new_bollywood', evening: 'mixed', night: 'old_hindi' };
+    const times = legacyTimes ? JSON.parse(legacyTimes) : { morning: '07:00', afternoon: '10:30', evening: '17:00', night: '20:00' };
+    const sch = {
+      id: uid('sch'), name: 'Default day',
+      phases: [
+        { id: uid('ph'), name: 'Morning',   start: times.morning   || '07:00', mood: moods.morning   || 'devotional' },
+        { id: uid('ph'), name: 'Midday',    start: times.afternoon || '10:30', mood: moods.afternoon || 'new_bollywood' },
+        { id: uid('ph'), name: 'Evening',   start: times.evening   || '17:00', mood: moods.evening   || 'mixed' },
+        { id: uid('ph'), name: 'Closing',   start: times.night     || '20:00', mood: moods.night     || 'old_hindi' },
+      ],
+    };
+    state.schedules = [sch];
+    state.activeScheduleId = sch.id;
+    return;
+  }
+  // Fresh install
+  const sch = defaultSchedule();
+  state.schedules = [sch];
+  state.activeScheduleId = sch.id;
+}
+
+window.addEventListener('load', async () => {
+  loadMoodsFromStorage();
+  loadSchedulesFromStorage();
+
+  // One-time cleanup: any old library entries saved before the track-count fix have
+  // "? tracks · Owner" baked into their meta. Strip the "?" prefix so they read cleanly.
+  // Real counts will then be backfilled on first picker view via enrichPlaylistTrackCount.
+  let cleaned = false;
+  Object.values(state.moods || {}).forEach(mood => {
+    (mood.queue || []).forEach(q => {
+      if (q.type === 'playlist' && typeof q.meta === 'string' && q.meta.includes('? tracks')) {
+        q.meta = q.meta.replace(/^\?\s*tracks\s*·\s*/, '');
+        cleaned = true;
+      }
+    });
+  });
+  if (cleaned) { try { persistMoods(); } catch {} }
+
+  renderMoodGrid();
+  renderScheduleToolbar();
+  renderPhases();
+  renderLibrary();
+  updateSlotLabel(new Date());
+
+  // Reflect default shuffle state on the now-playing button (even before anything plays)
+  document.getElementById('np-shuffle-btn')?.classList.toggle('active', state.shuffle);
+  updateSchedulerBtn();
+
   await handleAuthCallback();
-
-  log('🧪 Demo Mode is ON — click any mood to play via Spotify embed.', 'info');
+  log('Connect to Spotify in Step 01, then pick a mood to play on your device.', 'info');
 });
 </script>
 </body>
